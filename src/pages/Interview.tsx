@@ -64,7 +64,7 @@ export default function Interview() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-5 rounded-card border border-white/10 bg-white/[0.04] px-6 py-5 backdrop-blur-sm">
-            <Ring value={masteryPct} size={72} stroke={6} />
+            <Ring value={masteryPct} size={72} stroke={6} labelClassName="text-white" trackClassName="text-white/15" />
             <div>
               <p className="font-display text-2xl font-bold text-white">
                 {masteredCount}

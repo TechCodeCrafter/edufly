@@ -53,6 +53,8 @@ export function Ring({
   showLabel = true,
   label,
   className = '',
+  labelClassName = 'text-fg',
+  trackClassName,
   animate = true,
 }: {
   value: number;
@@ -61,6 +63,8 @@ export function Ring({
   showLabel?: boolean;
   label?: string;
   className?: string;
+  labelClassName?: string;
+  trackClassName?: string;
   animate?: boolean;
 }) {
   const r = (size - stroke) / 2;
@@ -77,7 +81,15 @@ export function Ring({
             <stop offset="100%" stopColor="var(--grad-to)" />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--ring-track)" strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={trackClassName ? 'currentColor' : 'var(--ring-track)'}
+          className={trackClassName}
+          strokeWidth={stroke}
+        />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -93,8 +105,8 @@ export function Ring({
       </svg>
       {showLabel && (
         <span
-          className="absolute mono font-semibold text-fg"
-          style={{ fontSize: Math.max(10, size * 0.24) }}
+          className={`absolute mono font-semibold leading-none ${labelClassName}`}
+          style={{ fontSize: Math.max(10, Math.min(size * 0.22, 18)) }}
         >
           {label ?? `${pct}%`}
         </span>

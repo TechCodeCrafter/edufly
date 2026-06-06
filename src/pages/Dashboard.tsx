@@ -61,7 +61,7 @@ export default function Dashboard() {
       <DarkHeader>
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-6">
-            <Ring value={overallPct} size={104} stroke={8} />
+            <Ring value={overallPct} size={104} stroke={8} labelClassName="text-white" trackClassName="text-white/15" />
             <div>
               <span className="mono inline-block rounded-full bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-eyebrow text-white/60">
                 Your progress

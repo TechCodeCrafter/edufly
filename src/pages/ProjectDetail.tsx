@@ -61,7 +61,7 @@ export default function ProjectDetail() {
             <p className="mt-4 max-w-xl text-base leading-relaxed text-white/55">{project.blurb}</p>
           </div>
           <div className="shrink-0 rounded-card border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-sm">
-            <Ring value={pct} size={88} stroke={7} />
+            <Ring value={pct} size={88} stroke={7} labelClassName="text-white" trackClassName="text-white/15" />
             <p className="mt-3 text-sm text-white/55">
               {doneCount} of {project.steps.length} steps
             </p>

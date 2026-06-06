@@ -13,7 +13,7 @@ type ViewMode = 'grid' | 'spine' | 'path';
 
 export default function Roadmap() {
   const [view, setView] = useState<ViewMode>('grid');
-  const { totalXP, streakDays, trackPct, lastTopicId } = useProgress();
+  const { totalXP, streakDays, trackPct, lastTopicId, overallPct } = useProgress();
 
   const resumeTopic = allTopics.find((t) => t.id === lastTopicId) ?? allTopics.find((t) => t.id === 'linux-systemd');
 
@@ -24,10 +24,6 @@ export default function Roadmap() {
     .filter((x) => x.pct > 0)
     .sort((a, b) => b.pct - a.pct)
     .slice(0, 3);
-
-  const overallPct = Math.round(
-    (tracks.reduce((acc, t) => acc + trackPct(t.id), 0) / tracks.length)
-  );
 
   return (
     <>
@@ -89,7 +85,7 @@ export default function Roadmap() {
                 <p className="mono text-xs uppercase tracking-eyebrow text-progress">Your path</p>
                 <h2 className="mt-1.5 font-display text-xl font-semibold text-white">Keep the streak alive</h2>
               </div>
-              <Ring value={overallPct} size={56} stroke={5} />
+              <Ring value={overallPct} size={64} stroke={5} labelClassName="text-white" trackClassName="text-white/15" />
             </div>
             <div className="mt-6 space-y-4">
               {(pathTracks.length ? pathTracks : tracks.slice(0, 3).map((t) => ({ t, pct: trackPct(t.id) }))).map(
