@@ -6,9 +6,9 @@ type ButtonVariant = 'primary' | 'light' | 'dark' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const sizeCls: Record<ButtonSize, string> = {
-  sm: 'h-9 px-3.5 text-sm gap-1.5',
+  sm: 'h-9 px-4 text-sm gap-1.5',
   md: 'h-11 px-5 text-sm gap-2',
-  lg: 'h-12 px-6 text-base gap-2',
+  lg: 'h-12 px-7 text-base gap-2',
 };
 
 export function Button({
@@ -27,11 +27,15 @@ export function Button({
   children?: React.ReactNode;
   className?: string;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  // Backprop-style: fully rounded pill buttons.
   const base =
-    'inline-flex items-center justify-center rounded-btn font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none disabled:opacity-50 disabled:pointer-events-none';
+    'inline-flex items-center justify-center rounded-full font-semibold whitespace-nowrap transition-all duration-200 focus-visible:outline-none disabled:opacity-50 disabled:pointer-events-none';
   const variants: Record<ButtonVariant, string> = {
+    // Brand gradient pill — primary CTA, keeps Edufly green.
     primary: 'gradient-bg text-white shadow-glow-sm hover:shadow-glow hover:-translate-y-0.5',
-    light: 'bg-white text-ink-900 border border-line hover:bg-card-2 hover:-translate-y-0.5 shadow-card',
+    // Neutral glass pill that reads on both themes (hairline border + soft fill).
+    light: 'glass text-fg hover:-translate-y-0.5',
+    // Translucent dark pill for use over imagery.
     dark: 'bg-white/5 text-white border border-white/15 hover:bg-white/10 backdrop-blur',
     ghost: 'text-fg-muted hover:text-fg hover:bg-card-2',
   };
@@ -42,6 +46,57 @@ export function Button({
       {children}
       {iconRight && <Icon name={iconRight} size={iconSize} />}
     </button>
+  );
+}
+
+/* ----------------------------- Glass card ----------------------------- */
+// Backprop-style translucent surface with a hairline border. Use everywhere a
+// panel/card is needed so the look stays consistent across the site.
+export function Glass({
+  as: Tag = 'div',
+  className = '',
+  hover = false,
+  children,
+  ...rest
+}: {
+  as?: React.ElementType;
+  className?: string;
+  hover?: boolean;
+  children?: React.ReactNode;
+} & React.HTMLAttributes<HTMLElement>) {
+  return (
+    <Tag
+      className={`glass rounded-card ${hover ? 'transition-all duration-200' : ''} ${className}`}
+      {...rest}
+    >
+      {children}
+    </Tag>
+  );
+}
+
+/* ----------------------------- EyebrowPill ----------------------------- */
+// Small uppercase category marker in a rounded glass chip, with an optional
+// leading status dot (set live for the pulsing green presence dot).
+export function EyebrowPill({
+  children,
+  dot = false,
+  live = false,
+  className = '',
+}: {
+  children: React.ReactNode;
+  dot?: boolean;
+  live?: boolean;
+  className?: string;
+}) {
+  return (
+    <span className={`eyebrow-pill ${className}`}>
+      {live ? (
+        <span className="live-dot" />
+      ) : dot ? (
+        <span className="h-2 w-2 rounded-full bg-accent" />
+      ) : null}
+      {children}
+    </span>
   );
 }
 
@@ -139,9 +194,9 @@ export function Bar({ value, className = '', height = 6 }: { value: number; clas
 export function LevelBadge({ level, className = '' }: { level: number; className?: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 pl-1 pr-3 py-1 text-xs font-semibold text-white ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border border-line bg-card pl-1 pr-3 py-1 text-xs font-semibold text-fg backdrop-blur ${className}`}
     >
-      <span className="grid h-6 w-6 place-items-center rounded-full gradient-bg text-[11px] font-bold">TK</span>
+      <span className="grid h-6 w-6 place-items-center rounded-full gradient-bg text-[11px] font-bold text-white">TK</span>
       Lvl {level}
     </span>
   );

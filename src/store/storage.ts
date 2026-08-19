@@ -4,7 +4,7 @@ let memory: Record<string, string> = {};
 let usable = false;
 
 try {
-  const k = '__tekops_probe__';
+  const k = '__edufly_probe__';
   window.localStorage.setItem(k, '1');
   window.localStorage.removeItem(k);
   usable = true;

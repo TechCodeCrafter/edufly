@@ -4,8 +4,8 @@
 
 :root {
   /* Accent gradient — themeable */
-  --grad-from: #06b6d4;
-  --grad-to: #3b82f6;
+  --grad-from: #10b981;
+  --grad-to: #84cc16;
 
   /* Light content surfaces (default) */
   --page: #f6f8fc;
@@ -19,14 +19,15 @@
 }
 
 [data-content-theme='dark'] {
-  --page: #0a0d18;
-  --card: #0e1322;
-  --card-2: #131a2c;
-  --line: #1d263b;
-  --ring-track: #1d263b;
-  --fg: #e8edf6;
-  --fg-muted: #94a3b8;
-  --fg-faint: #5d6b85;
+  /* Backprop-style near-pure-black surfaces with glass cards */
+  --page: #0a0a0a;
+  --card: #ffffff0d;        /* white @ 5% — glass */
+  --card-2: #ffffff14;      /* white @ 8% — raised glass */
+  --line: #ffffff1a;        /* white @ 10% — hairline borders */
+  --ring-track: #ffffff14;
+  --fg: #ffffff;
+  --fg-muted: #ffffffcc;    /* white @ 80% */
+  --fg-faint: #ffffff80;    /* white @ 50% */
 }
 
 *,
@@ -46,6 +47,7 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
+  overflow-x: hidden;
   font-family: 'Manrope', system-ui, sans-serif;
   background-color: var(--page);
   color: var(--fg);
@@ -60,10 +62,21 @@ h4,
 h5,
 h6 {
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
   text-wrap: balance;
   margin: 0;
+}
+
+/* Backprop-style page texture: faint dot grid on the dark theme only,
+   fixed so it reads as a backdrop behind all content. */
+[data-content-theme='dark'] body {
+  background-color: var(--page);
+  background-image:
+    radial-gradient(circle at 25% 25%, #ffffff14 0.5px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #ffffff0a 0.5px, transparent 1px);
+  background-size: 26px 26px, 26px 26px;
+  background-attachment: fixed;
 }
 
 :focus-visible {
@@ -113,6 +126,91 @@ h6 {
     background: linear-gradient(135deg, var(--grad-from), var(--grad-to));
   }
 
+  /* ----- Backprop-style primitives ----- */
+
+  /* Glass card: translucent surface + hairline border. On light theme it
+     falls back to an opaque white card so light mode stays clean. */
+  .glass {
+    background: var(--card);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  [data-content-theme='dark'] .glass:hover {
+    background: var(--card-2);
+    border-color: #ffffff2e;
+  }
+
+  /* Eyebrow pill: small uppercase category marker in a rounded glass chip,
+     optional leading status dot. */
+  .eyebrow-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    padding: 0.35rem 0.85rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  /* Live status dot with a soft pulse, like backprop's green presence dot. */
+  .live-dot {
+    position: relative;
+    display: inline-block;
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 9999px;
+    background: var(--grad-from);
+  }
+  .live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    background: var(--grad-from);
+    animation: livePing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+
+  /* Frosted top nav. */
+  .nav-frost {
+    background: color-mix(in srgb, var(--page) 70%, transparent);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* Oversized, tight hero headline like backprop's 72px / -3.6px. Fluid. */
+  .hero-title {
+    font-size: clamp(2.75rem, 7vw, 4.75rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.98;
+  }
+  .section-title {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  /* White-pill CTA (backprop primary). Inverts per theme so it always pops:
+     near-white pill on dark, near-black pill on light. We keep the gradient
+     button as the brand CTA, but this is available where a neutral pill fits. */
+  .pill-invert {
+    border-radius: 9999px;
+    background: var(--fg);
+    color: var(--page);
+    font-weight: 600;
+  }
+
   .gradient-border {
     position: relative;
   }
@@ -155,11 +253,99 @@ h6 {
     overflow: hidden;
     min-height: 0;
   }
+
+  /* hover-reveal subtopic peek on track cards (uses the .group card wrapper) */
+  .hover-peek {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, margin-top 0.3s ease;
+  }
+  .group:hover .hover-peek,
+  .group:focus-within .hover-peek {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    margin-top: 0.625rem;
+  }
+  .hover-peek > .hover-peek-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+  /* keep peek visible on touch devices where hover is unavailable */
+  @media (hover: none) {
+    .hover-peek {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      margin-top: 0.625rem;
+    }
+  }
 }
 
 /* dark navy chrome scrollbar polish */
 .darkchrome {
   background-color: #06080f;
+}
+
+/* spinner for AI loading states */
+@keyframes spin360 {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spin {
+  animation: spin360 0.8s linear infinite;
+}
+
+/* gentle fade-up for AI feedback reveal */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-up {
+  animation: fadeUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* typing dots for interviewer thinking */
+@keyframes typingBlink {
+  0%, 60%, 100% {
+    opacity: 0.25;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.typing-dot {
+  animation: typingBlink 1.2s ease-in-out infinite;
+}
+
+/* recording mic: soft glow pulse + blinking status dot */
+@keyframes micPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+}
+.mic-pulse {
+  animation: micPulse 1.4s ease-in-out infinite;
+}
+@keyframes micBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+.mic-dot {
+  animation: micBlink 1s ease-in-out infinite;
 }
 
 /* hide scrollbar for filter rows */
@@ -177,6 +363,53 @@ h6 {
   background-size: 28px 28px;
 }
 .hero-glow {
-  background: radial-gradient(60% 60% at 80% 20%, rgba(6, 182, 212, 0.18), transparent 70%),
-    radial-gradient(50% 50% at 15% 30%, rgba(59, 130, 246, 0.14), transparent 70%);
+  background: radial-gradient(60% 60% at 80% 20%, rgba(16, 185, 129, 0.18), transparent 70%),
+    radial-gradient(50% 50% at 15% 30%, rgba(132, 204, 22, 0.14), transparent 70%);
+}
+
+/* pulse ring for live status dots */
+@keyframes livePing {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  75%,
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* horizontal auto-scroll marquee for testimonial / proof rows */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee var(--marquee-duration, 40s) linear infinite;
+}
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-pause:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* top edge-fade vignette for hero, backprop-style */
+.edge-fade-y {
+  position: relative;
+}
+.edge-fade-y::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(var(--page), transparent 18%, transparent 82%, var(--page));
 }

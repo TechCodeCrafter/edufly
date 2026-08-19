@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { tracks, allTopics } from '../data/tracks';
 import { useProgress } from '../store/progress';
-import { Ring, Bar, Button } from '../components/ui';
+import { Ring, Bar, Button, EyebrowPill, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { StatCard, WeekStrip } from '../components/cards';
 import { DarkHeader } from '../components/DarkHeader';
@@ -61,33 +61,31 @@ export default function Dashboard() {
       <DarkHeader>
         <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-6">
-            <Ring value={overallPct} size={104} stroke={8} labelClassName="text-white" trackClassName="text-white/15" />
+            <Ring value={overallPct} size={104} stroke={8} labelClassName="text-fg" />
             <div>
-              <span className="mono inline-block rounded-full bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-eyebrow text-white/60">
-                Your progress
-              </span>
-              <h1 className="mt-3 font-display text-[clamp(1.9rem,1rem+3vw,3rem)] font-bold leading-tight tracking-tight2 text-white">
+              <EyebrowPill dot>Your progress</EyebrowPill>
+              <h1 className="mt-3 hero-title text-fg">
                 Level {level} engineer
               </h1>
-              <p className="mt-2 text-base text-white/55">
-                {topicsDone} of {topicsTotal} topics done · {overallPct}% of the roadmap
+              <p className="mt-2 text-base text-fg-muted">
+                {topicsDone} of {topicsTotal} topics done {'\u00b7'} {overallPct}% of the roadmap
               </p>
             </div>
           </div>
-          <div className="w-full max-w-sm rounded-card border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm">
+          <Glass className="w-full max-w-sm p-5">
             <div className="flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-1.5 text-white/70">
-                <Icon name="zap" size={16} className="text-progress" /> Level {level}
+              <span className="inline-flex items-center gap-1.5 text-fg-muted">
+                <Icon name="zap" size={16} className="text-accent" /> Level {level}
               </span>
-              <span className="mono text-white/55">{xpIntoLevel} / {xpForNextLevel} XP</span>
+              <span className="mono text-fg-muted">{xpIntoLevel} / {xpForNextLevel} XP</span>
             </div>
             <div className="mt-3">
               <Bar value={xpPct} height={8} />
             </div>
-            <p className="mt-2.5 text-xs text-white/45">
-              {xpForNextLevel - xpIntoLevel} XP to level {level + 1} · {totalXP.toLocaleString()} XP total
+            <p className="mt-2.5 text-xs text-fg-faint">
+              {xpForNextLevel - xpIntoLevel} XP to level {level + 1} {'\u00b7'} {totalXP.toLocaleString()} XP total
             </p>
-          </div>
+          </Glass>
         </div>
       </DarkHeader>
 
@@ -105,7 +103,7 @@ export default function Dashboard() {
           <section>
             <div className="mb-5 flex items-center justify-between">
               <h2 className="font-display text-xl font-bold tracking-tight2 text-fg">Track progress</h2>
-              <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-progress hover:opacity-80">
+              <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:opacity-80">
                 View roadmap <Icon name="arrow-right" size={15} />
               </Link>
             </div>
@@ -116,11 +114,11 @@ export default function Dashboard() {
                 return (
                   <div
                     key={t.id}
-                    className="flex items-center gap-4 rounded-card border border-line bg-card p-4 shadow-card"
+                    className="glass flex items-center gap-4 rounded-card p-4"
                   >
                     <span
                       className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${
-                        t.locked ? 'bg-card-2 text-locked' : 'gradient-bg text-white'
+                        t.locked ? 'border border-line bg-card-2 text-locked' : 'gradient-bg text-white'
                       }`}
                     >
                       <Icon name={(t.locked ? 'lock' : t.icon) as any} size={19} />
@@ -143,7 +141,7 @@ export default function Dashboard() {
 
           <div className="space-y-8">
             {/* Streak strip */}
-            <section className="rounded-card border border-line bg-card p-5 shadow-card">
+            <section className="glass rounded-card p-5">
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="font-display text-base font-bold text-fg">This week</h2>
                 <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-streak">
@@ -162,9 +160,9 @@ export default function Dashboard() {
                     <Link
                       key={t.id}
                       to={`/topic/${t.id}`}
-                      className="group flex items-center gap-3 rounded-card border border-line bg-card p-3.5 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                      className="group glass flex items-center gap-3 rounded-card p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-lift"
                     >
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-card-2 text-progress">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line bg-card-2 text-accent">
                         <Icon name="play" size={16} />
                       </span>
                       <div className="min-w-0 flex-1">
@@ -178,7 +176,7 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-card border border-line bg-card p-6 text-center shadow-card">
+                <div className="glass rounded-card p-6 text-center">
                   <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl gradient-bg text-white">
                     <Icon name="trophy" size={20} />
                   </span>
@@ -199,13 +197,13 @@ export default function Dashboard() {
               return (
                 <div
                   key={a.id}
-                  className={`rounded-card border p-5 text-center transition-all ${
-                    earned ? 'border-line bg-card shadow-card' : 'border-dashed border-line bg-card/50'
+                  className={`rounded-card p-5 text-center transition-all ${
+                    earned ? 'glass' : 'border border-dashed border-line bg-card-2/30'
                   }`}
                 >
                   <span
                     className={`mx-auto grid h-12 w-12 place-items-center rounded-2xl ${
-                      earned ? 'gradient-bg text-white shadow-glow-sm' : 'bg-card-2 text-fg-faint'
+                      earned ? 'gradient-bg text-white shadow-glow-sm' : 'border border-line bg-card-2 text-fg-faint'
                     }`}
                   >
                     <Icon name={a.icon} size={22} />
@@ -226,7 +224,7 @@ export default function Dashboard() {
         </section>
 
         {/* Reset */}
-        <div className="mt-12 flex flex-col items-start justify-between gap-4 rounded-card border border-line bg-card p-6 shadow-card sm:flex-row sm:items-center">
+        <div className="mt-12 glass flex flex-col items-start justify-between gap-4 rounded-card p-6 sm:flex-row sm:items-center">
           <div>
             <h3 className="font-display text-base font-semibold text-fg">Start fresh?</h3>
             <p className="mt-1 text-sm text-fg-muted">Reset all progress, streaks and mastered questions. This cannot be undone.</p>

@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { safeStorage } from './storage';
 
 type Theme = 'light' | 'dark';
-const KEY = 'tekops.theme';
+const KEY = 'edufly.theme';
 
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void } | null>(null);
 

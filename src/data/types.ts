@@ -1,5 +1,8 @@
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
 
+// A terminal line: either a raw string, or a command paired with a plain-language note.
+export type CodeLine = string | { cmd: string; note?: string };
+
 export interface Topic {
   id: string;
   name: string;
@@ -8,10 +11,15 @@ export interface Topic {
   optional?: boolean;
   summary: string;
   objectives: string[];
+  // Absolute-beginner primer shown before the main lesson. Each point defines
+  // a term or idea in plain English, assuming zero prior knowledge.
+  basics?: { intro: string; points: { term: string; plain: string }[] };
   sections: { heading: string; body: string }[];
-  code?: { label: string; lines: string[] };
+  code?: { label: string; lines: CodeLine[] };
   resources: { label: string; kind: string }[];
 }
+
+export type Phase = 'foundations' | 'core' | 'advanced';
 
 export interface Track {
   id: string;
@@ -20,8 +28,11 @@ export interface Track {
   blurb: string;
   icon: string; // icon key
   difficulty: Difficulty;
+  phase: Phase;
   popular?: boolean;
   locked?: boolean;
+  // A short, action-oriented one-liner used on cards (verb-first outcome).
+  action?: string;
   topics: Topic[];
 }
 

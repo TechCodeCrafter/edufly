@@ -2,7 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { projects } from '../data/projects';
 import { tracks } from '../data/tracks';
 import { useProgress } from '../store/progress';
-import { Button, Ring } from '../components/ui';
+import { Button, Ring, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { DarkHeader } from '../components/DarkHeader';
 
@@ -37,10 +37,10 @@ export default function ProjectDetail() {
   return (
     <>
       <DarkHeader>
-        <nav className="mb-6 flex items-center gap-2 text-sm text-white/45">
-          <Link to="/projects" className="transition-colors hover:text-white/80">Projects</Link>
+        <nav className="mb-6 flex items-center gap-2 text-sm text-fg-faint">
+          <Link to="/projects" className="transition-colors hover:text-fg">Projects</Link>
           <Icon name="chevron-right" size={14} />
-          <span className="text-white/70">{project.area}</span>
+          <span className="text-fg-muted">{project.area}</span>
         </nav>
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="max-w-2xl">
@@ -51,21 +51,21 @@ export default function ProjectDetail() {
               <span className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${diffPill[project.difficulty]}`}>
                 {project.difficulty}
               </span>
-              <span className="inline-flex items-center gap-1.5 text-sm text-white/55">
+              <span className="inline-flex items-center gap-1.5 text-sm text-fg-muted">
                 <Icon name="clock" size={15} /> {project.time}
               </span>
             </div>
-            <h1 className="font-display text-[clamp(1.9rem,1rem+3vw,3rem)] font-bold leading-[1.08] tracking-tight2 text-white">
+            <h1 className="hero-title text-fg">
               {project.title}
             </h1>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/55">{project.blurb}</p>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-fg-muted">{project.blurb}</p>
           </div>
-          <div className="shrink-0 rounded-card border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-sm">
-            <Ring value={pct} size={88} stroke={7} labelClassName="text-white" trackClassName="text-white/15" />
-            <p className="mt-3 text-sm text-white/55">
+          <Glass className="shrink-0 p-6 text-center">
+            <Ring value={pct} size={88} stroke={7} labelClassName="text-fg" />
+            <p className="mt-3 text-sm text-fg-muted">
               {doneCount} of {project.steps.length} steps
             </p>
-          </div>
+          </Glass>
         </div>
       </DarkHeader>
 
@@ -73,11 +73,11 @@ export default function ProjectDetail() {
         <div className="min-w-0">
           {/* Outcomes */}
           <section>
-            <p className="mono mb-4 text-xs uppercase tracking-eyebrow text-progress">What you will end up with</p>
+            <p className="mono mb-4 text-xs uppercase tracking-eyebrow text-accent">What you will end up with</p>
             <div className="grid gap-4 sm:grid-cols-3">
               {project.outcomes.map((o, i) => (
-                <div key={i} className="rounded-card border border-line bg-card p-4 shadow-card">
-                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-card-2 text-progress">
+                <div key={i} className="glass rounded-card p-4">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg border border-line bg-card-2 text-accent">
                     <Icon name="sparkle" size={18} />
                   </span>
                   <p className="mt-3 text-sm font-medium leading-snug text-fg">{o}</p>
@@ -89,10 +89,10 @@ export default function ProjectDetail() {
           {/* Build steps */}
           <section className="mt-10">
             <div className="mb-4 flex items-center justify-between">
-              <p className="mono text-xs uppercase tracking-eyebrow text-progress">Build steps</p>
+              <p className="mono text-xs uppercase tracking-eyebrow text-accent">Build steps</p>
               <span className="mono text-xs text-fg-faint">{doneCount}/{project.steps.length}</span>
             </div>
-            <div className="overflow-hidden rounded-card border border-line bg-card shadow-card">
+            <div className="glass overflow-hidden rounded-card">
               {project.steps.map((step, i) => {
                 const done = projectStepDone(project.id, i);
                 return (
@@ -126,14 +126,14 @@ export default function ProjectDetail() {
 
           {/* Prerequisites */}
           <section className="mt-10">
-            <p className="mono mb-3 text-xs uppercase tracking-eyebrow text-progress">Before you start</p>
+            <p className="mono mb-3 text-xs uppercase tracking-eyebrow text-accent">Before you start</p>
             <div className="flex flex-wrap gap-2.5">
               {project.prerequisites.map((p, i) => (
                 <span
                   key={i}
-                  className="inline-flex items-center gap-1.5 rounded-chip border border-line bg-card px-3 py-1.5 text-sm text-fg-muted"
+                  className="glass inline-flex items-center gap-1.5 rounded-chip px-3 py-1.5 text-sm text-fg-muted"
                 >
-                  <Icon name="circle" size={12} className="text-progress" />
+                  <Icon name="circle" size={12} className="text-accent" />
                   {p}
                 </span>
               ))}
@@ -145,8 +145,8 @@ export default function ProjectDetail() {
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <div className="space-y-5">
             <div
-              className={`rounded-card border p-6 text-center shadow-card transition-colors ${
-                complete ? 'border-done/40 bg-done/[0.04]' : 'border-line bg-card'
+              className={`glass rounded-card p-6 text-center transition-colors ${
+                complete ? 'ring-1 ring-done/40' : ''
               }`}
             >
               {complete ? (
@@ -168,7 +168,7 @@ export default function ProjectDetail() {
               )}
             </div>
 
-            <div className="rounded-card border border-line bg-card p-5 shadow-card">
+            <div className="glass rounded-card p-5">
               <p className="mono mb-3 text-[10px] uppercase tracking-eyebrow text-fg-faint">Tech stack</p>
               <div className="flex flex-wrap gap-2">
                 {project.stack.map((s, i) => (
@@ -185,7 +185,7 @@ export default function ProjectDetail() {
             {track && (
               <Link
                 to="/"
-                className="group flex items-center gap-3 rounded-card border border-line bg-card p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                className="group glass flex items-center gap-3 rounded-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-lift"
               >
                 <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl gradient-bg text-white">
                   <Icon name={track.icon as any} size={19} />

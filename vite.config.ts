@@ -5,4 +5,11 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: './',
   plugins: [react()],
+  // Local-only: proxy the AI endpoint to the dev-api shim during QA.
+  // In production on Vercel, /api is served by the serverless function directly.
+  server: {
+    proxy: {
+      '/api': 'http://localhost:8787',
+    },
+  },
 })

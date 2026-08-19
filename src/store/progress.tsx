@@ -10,56 +10,38 @@ export const XP_PER_TOPIC = 100;
 export const XP_PER_PROJECT = 250;
 export const XP_PER_LEVEL = 500;
 
-interface PersistShape {
+export interface PersistShape {
   topics: Record<string, TopicStatus>;
   projectSteps: Record<string, string[]>; // projectId -> completed step indices (as strings)
   mastered: string[]; // question ids
   lastTopicId?: string;
+  recentTopics: string[]; // topic ids, most recent first (for the "Recently viewed" rail)
   streakDays: number;
   streakDates: string[]; // ISO date strings, most recent last
 }
 
-const KEY = 'tekops.progress.v1';
+// How many topics to remember for the "Recently viewed" rail.
+const RECENT_LIMIT = 6;
 
-// Seed a realistic demo state so the app feels alive on first load,
-// matching the design mockups (level 2, 12-day streak, ~9 topics done).
-const SEED_TOPICS: Record<string, TopicStatus> = {
-  'linux-shell': 'done',
-  'linux-perms': 'done',
-  'linux-processes': 'done',
-  'linux-users': 'done',
-  'linux-systemd': 'in-progress',
-  'script-bash': 'done',
-  'script-vars': 'done',
-  'script-python': 'done',
-  'git-basics': 'done',
-  'git-branching': 'done',
-  'docker-what': 'done',
-};
+// v2: start everyone at a true zero state. No seeded/demo progress.
+// (v1 pre-marked topics as done, which made the app look like the user had
+// completed things they never touched.) Bumping the key gives old visitors a
+// clean slate automatically.
+const KEY = 'edufly.progress.v2';
 
 function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function seedStreakDates(days: number): string[] {
-  const out: string[] = [];
-  const today = new Date();
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(today);
-    d.setDate(today.getDate() - i);
-    out.push(isoDate(d));
-  }
-  return out;
-}
-
 function defaultState(): PersistShape {
   return {
-    topics: { ...SEED_TOPICS },
+    topics: {},
     projectSteps: {},
     mastered: [],
-    lastTopicId: 'linux-systemd',
-    streakDays: 12,
-    streakDates: seedStreakDates(12),
+    lastTopicId: undefined,
+    recentTopics: [],
+    streakDays: 0,
+    streakDates: [],
   };
 }
 
@@ -73,6 +55,7 @@ function load(): PersistShape {
       projectSteps: parsed.projectSteps ?? {},
       mastered: parsed.mastered ?? [],
       lastTopicId: parsed.lastTopicId,
+      recentTopics: parsed.recentTopics ?? [],
       streakDays: parsed.streakDays ?? 0,
       streakDates: parsed.streakDates ?? [],
     };
@@ -95,12 +78,15 @@ interface Derived {
   masteredCount: number;
   questionsTotal: number;
   overallPct: number;
+  tracksCompleted: number;
+  tracksTotal: number;
 }
 
 interface Ctx extends PersistShape, Derived {
   topicStatus: (id: string) => TopicStatus;
   cycleTopic: (id: string) => void;
   setTopicDone: (id: string) => void;
+  recordView: (id: string) => void;
   toggleProjectStep: (projectId: string, idx: number) => void;
   projectStepDone: (projectId: string, idx: number) => boolean;
   projectPct: (projectId: string) => number;
@@ -108,7 +94,18 @@ interface Ctx extends PersistShape, Derived {
   toggleMastered: (qid: string) => void;
   trackPct: (trackId: string) => number;
   trackDone: (trackId: string) => number;
+  // Required-topic-aware counts so the UI can speak honestly about what is
+  // needed for the badge vs what is optional enrichment.
+  trackRequiredDone: (trackId: string) => number;
+  trackRequiredTotal: (trackId: string) => number;
+  // Whole-roadmap track-completion progress, used for transparent unlocking.
+  tracksCompleted: number;
+  tracksTotal: number;
+  isTrackComplete: (trackId: string) => boolean;
   reset: () => void;
+  // Overwrites local state wholesale, used once by cloud sync to apply a
+  // merged local+cloud snapshot right after Google sign in.
+  hydrate: (next: PersistShape) => void;
 }
 
 const ProgressContext = createContext<Ctx | null>(null);
@@ -128,7 +125,15 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     const today = isoDate(new Date());
     if (s.streakDates.includes(today)) return s;
     const dates = [...s.streakDates, today];
-    return { ...s, streakDates: dates, streakDays: Math.max(s.streakDays, dates.length) };
+    // Count the streak as the run of consecutive days ending today.
+    const set = new Set(dates);
+    let streak = 0;
+    const cursor = new Date();
+    while (set.has(isoDate(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return { ...s, streakDates: dates, streakDays: streak };
   }, []);
 
   const topicStatus = useCallback((id: string): TopicStatus => state.topics[id] ?? 'todo', [state.topics]);
@@ -144,6 +149,17 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
   const setTopicDone = useCallback((id: string) => {
     setState((s) => recordActivity({ ...s, topics: { ...s.topics, [id]: 'done' }, lastTopicId: id }));
   }, [recordActivity]);
+
+  // Remember that the learner opened a topic, without changing its status.
+  // Powers the Resume banner and the Recently viewed rail. We do NOT count a
+  // mere view toward the streak, so streaks stay tied to real completions.
+  const recordView = useCallback((id: string) => {
+    setState((s) => {
+      const recent = [id, ...s.recentTopics.filter((x) => x !== id)].slice(0, RECENT_LIMIT);
+      if (s.lastTopicId === id && s.recentTopics[0] === id) return s;
+      return { ...s, lastTopicId: id, recentTopics: recent };
+    });
+  }, []);
 
   const toggleProjectStep = useCallback((projectId: string, idx: number) => {
     setState((s) => {
@@ -198,15 +214,46 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     [trackDone]
   );
 
+  // Count only the required (non-optional) topics, so a track can be "complete"
+  // for badge purposes even if a learner skips the optional deep-dives.
+  const trackRequiredTotal = useCallback((trackId: string) => {
+    const tk = tracks.find((t) => t.id === trackId);
+    if (!tk) return 0;
+    return tk.topics.filter((tp) => !tp.optional).length;
+  }, []);
+
+  const trackRequiredDone = useCallback(
+    (trackId: string) => {
+      const tk = tracks.find((t) => t.id === trackId);
+      if (!tk) return 0;
+      return tk.topics.filter((tp) => !tp.optional && state.topics[tp.id] === 'done').length;
+    },
+    [state.topics]
+  );
+
+  // A track counts as complete once every required topic is done.
+  const isTrackComplete = useCallback(
+    (trackId: string) => {
+      const total = trackRequiredTotal(trackId);
+      return total > 0 && trackRequiredDone(trackId) >= total;
+    },
+    [trackRequiredTotal, trackRequiredDone]
+  );
+
   const reset = useCallback(() => {
     setState({
       topics: {},
       projectSteps: {},
       mastered: [],
       lastTopicId: undefined,
+      recentTopics: [],
       streakDays: 0,
       streakDates: [],
     });
+  }, []);
+
+  const hydrate = useCallback((next: PersistShape) => {
+    setState(next);
   }, []);
 
   const derived = useMemo<Derived>(() => {
@@ -219,6 +266,11 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     const xpIntoLevel = totalXP % XP_PER_LEVEL;
     const masteredCount = state.mastered.length;
     const overallPct = Math.round((topicsDone / totalTopics) * 100);
+    // Track-level completion across the whole roadmap (required topics only).
+    const tracksCompleted = tracks.filter((tk) => {
+      const req = tk.topics.filter((tp) => !tp.optional);
+      return req.length > 0 && req.every((tp) => state.topics[tp.id] === 'done');
+    }).length;
     return {
       topicXP,
       projectXP,
@@ -233,6 +285,8 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       masteredCount,
       questionsTotal: questions.length,
       overallPct,
+      tracksCompleted,
+      tracksTotal: tracks.length,
     };
   }, [state.topics, state.mastered, projectPct]);
 
@@ -242,6 +296,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     topicStatus,
     cycleTopic,
     setTopicDone,
+    recordView,
     toggleProjectStep,
     projectStepDone,
     projectPct,
@@ -249,7 +304,11 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     toggleMastered,
     trackPct,
     trackDone,
+    trackRequiredDone,
+    trackRequiredTotal,
+    isTrackComplete,
     reset,
+    hydrate,
   };
 
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>;

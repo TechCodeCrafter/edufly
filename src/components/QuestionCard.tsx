@@ -4,15 +4,23 @@ import { useProgress } from '../store/progress';
 import type { Question } from '../data/types';
 import { diffColor, diffLabel } from './ui';
 
-export function QuestionCard({ question, num }: { question: Question; num: number }) {
+export function QuestionCard({
+  question,
+  num,
+  onPractice,
+}: {
+  question: Question;
+  num: number;
+  onPractice?: () => void;
+}) {
   const { isMastered, toggleMastered } = useProgress();
   const [open, setOpen] = useState(false);
   const mastered = isMastered(question.id);
 
   return (
     <div
-      className={`rounded-card border bg-card shadow-card transition-colors ${
-        mastered ? 'border-done/40' : 'border-line'
+      className={`glass rounded-card transition-colors ${
+        mastered ? 'ring-1 ring-done/40' : ''
       }`}
     >
       <div className="flex items-start gap-3 p-4 sm:p-5">
@@ -59,8 +67,17 @@ export function QuestionCard({ question, num }: { question: Question; num: numbe
       <div className={`collapsible ${open ? 'open' : ''}`}>
         <div className="collapsible-inner">
           <div className="border-t border-line px-4 pb-5 pt-4 sm:px-5 sm:pl-14">
-            <p className="mono mb-2 text-[10px] uppercase tracking-eyebrow text-progress">Model answer</p>
+            <p className="mono mb-2 text-[10px] uppercase tracking-eyebrow text-accent">Model answer</p>
             <p className="text-sm leading-relaxed text-fg-muted">{question.answer}</p>
+            {onPractice && (
+              <button
+                onClick={onPractice}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent transition-colors hover:bg-accent/15"
+              >
+                <Icon name="sparkle" size={13} />
+                Test yourself with AI
+              </button>
+            )}
           </div>
         </div>
       </div>

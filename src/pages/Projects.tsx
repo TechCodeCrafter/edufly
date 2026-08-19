@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { projects } from '../data/projects';
 import { useProgress } from '../store/progress';
-import { Chip, Button } from '../components/ui';
+import { Chip, Button, EyebrowPill, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { ProjectCard } from '../components/cards';
 import { DarkHeader } from '../components/DarkHeader';
@@ -38,31 +38,29 @@ export default function Projects() {
       <DarkHeader>
         <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <span className="mono inline-block rounded-full bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-eyebrow text-white/60">
-              Hands-on practice
-            </span>
-            <h1 className="mt-4 font-display text-[clamp(2rem,1rem+3vw,3.25rem)] font-bold leading-[1.06] tracking-tight2 text-white">
+            <EyebrowPill dot>Hands-on practice</EyebrowPill>
+            <h1 className="mt-4 hero-title text-fg">
               Build <span className="gradient-text">22 real projects</span>
             </h1>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-white/55">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-fg-muted">
               Reading is not enough. Each project mirrors a task you would actually own on the job, from a first
               CI/CD pipeline to a full GitOps cluster. Ship them, then put them in your portfolio.
             </p>
           </div>
-          <div className="flex items-center gap-5 rounded-card border border-white/10 bg-white/[0.04] px-6 py-5 backdrop-blur-sm">
+          <Glass className="flex items-center gap-5 px-6 py-5">
             <div>
-              <p className="font-display text-3xl font-bold text-white">
+              <p className="font-display text-3xl font-bold text-fg">
                 {projectsDone}
-                <span className="text-white/40">/{projectsTotal}</span>
+                <span className="text-fg-faint">/{projectsTotal}</span>
               </p>
-              <p className="mt-0.5 text-xs text-white/45">Shipped</p>
+              <p className="mt-0.5 text-xs text-fg-muted">Shipped</p>
             </div>
-            <span className="h-12 w-px bg-white/10" />
+            <span className="h-12 w-px bg-line" />
             <div>
-              <p className="font-display text-3xl font-bold text-white">{projectsTotal * 250}</p>
-              <p className="mt-0.5 text-xs text-white/45">XP on offer</p>
+              <p className="font-display text-3xl font-bold text-fg">{projectsTotal * 250}</p>
+              <p className="mt-0.5 text-xs text-fg-muted">XP on offer</p>
             </div>
-          </div>
+          </Glass>
         </div>
       </DarkHeader>
 
@@ -102,8 +100,8 @@ export default function Projects() {
             ))}
           </div>
         ) : (
-          <div className="mt-8 grid place-items-center rounded-card border border-dashed border-line bg-card py-20 text-center">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-card-2 text-fg-faint">
+          <div className="mt-8 grid place-items-center rounded-card border border-dashed border-line bg-card-2/40 py-20 text-center">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl border border-line bg-card-2 text-fg-faint">
               <Icon name="box" size={26} />
             </span>
             <h3 className="mt-4 font-display text-lg font-semibold text-fg">No projects match those filters</h3>

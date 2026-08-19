@@ -5,13 +5,21 @@ import './index.css';
 import App from './App';
 import { ThemeProvider } from './store/theme';
 import { ProgressProvider } from './store/progress';
+import { AuthProvider } from './store/auth';
+import { SyncStatusProvider } from './store/sync';
+import { CloudSync } from './store/cloudSync';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
       <ThemeProvider>
         <ProgressProvider>
-          <App />
+          <AuthProvider>
+            <SyncStatusProvider>
+              <CloudSync />
+              <App />
+            </SyncStatusProvider>
+          </AuthProvider>
         </ProgressProvider>
       </ThemeProvider>
     </HashRouter>
