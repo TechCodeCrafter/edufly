@@ -38,12 +38,22 @@ const safeAuthStorage = {
   },
 };
 
+// The app uses hash-based routing (e.g. https://edufly.dev/#/dashboard).
+// The default Supabase OAuth flow ("implicit") returns from Google with the
+// session tokens appended as a second URL fragment
+// (https://edufly.dev/#/dashboard#access_token=...), and a URL can only
+// have one fragment, so the browser folds both into a single mangled hash
+// and Supabase's client never finds "access_token", silently failing to
+// sign in. The "pkce" flow instead returns an unambiguous query parameter
+// (?code=...) that survives alongside any hash route, which is why it's
+// required for apps using HashRouter-style navigation.
 export const supabase = cloudEnabled
   ? createClient(url as string, anonKey as string, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        flowType: 'pkce',
         storage: safeAuthStorage,
       },
     })
