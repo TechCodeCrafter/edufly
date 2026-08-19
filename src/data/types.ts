@@ -36,6 +36,13 @@ export interface Track {
   topics: Topic[];
 }
 
+// A build step: a short imperative title plus a plain-language "how", written
+// as a simple memory aid (an analogy or a mnemonic) so it sticks.
+export interface ProjectStep {
+  title: string;
+  how: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -46,7 +53,7 @@ export interface Project {
   blurb: string;
   icon: string;
   outcomes: string[];
-  steps: string[];
+  steps: ProjectStep[];
   stack: string[];
   prerequisites: string[];
 }

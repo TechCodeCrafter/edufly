@@ -95,22 +95,12 @@ export default function Roadmap() {
               ))}
             </div>
 
-            {/* Outcome line + community / GitHub framing */}
+            {/* Outcome line */}
             <div className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
               <p className="inline-flex items-center gap-2 text-sm text-fg-muted">
                 <Icon name="target" size={16} className="text-accent" />
                 Everything you need from zero to hire-ready DevOps.
               </p>
-              <a
-                href="https://github.com"
-                target="_blank"
-                rel="noreferrer"
-                className="eyebrow-pill normal-case tracking-normal text-fg-muted transition-colors hover:text-fg"
-                style={{ fontFamily: 'inherit', fontSize: '0.8125rem' }}
-              >
-                <Icon name="branch" size={15} />
-                {'Built by engineers \u00b7 star it on GitHub'}
-              </a>
             </div>
           </div>
 

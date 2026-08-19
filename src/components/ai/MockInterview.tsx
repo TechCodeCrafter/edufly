@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, Ring } from '../ui';
 import { Icon } from '../Icon';
 import { FallbackNote } from './QuickPractice';
-import { mockNext, mockSummary, type MockTurn, type ScoreCard, type Provider } from '../../lib/ai';
+import { gradeAnswer, mockNext, mockSummary, type GradeResult, type MockTurn, type ScoreCard, type Provider } from '../../lib/ai';
 import { useSpeechToText, useTextToSpeech } from '../../lib/useVoice';
 import type { Difficulty } from '../../data/types';
 
-type Stage = 'setup' | 'interviewing' | 'thinking' | 'summarizing' | 'done' | 'error';
+type Stage = 'setup' | 'interviewing' | 'grading' | 'reviewing' | 'thinking' | 'summarizing' | 'done' | 'error';
 
 const ROLES = ['DevOps Engineer', 'Site Reliability Engineer', 'Platform Engineer', 'Cloud Engineer'];
 const FOCUS = ['General DevOps', 'Kubernetes', 'CI/CD', 'Terraform', 'Networking', 'Observability'];
@@ -25,6 +25,10 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
   const [scorecard, setScorecard] = useState<ScoreCard | null>(null);
   const [provider, setProvider] = useState<Provider>('fallback');
   const [error, setError] = useState('');
+
+  // Feedback for a candidate answer, keyed by that turn's index in transcript,
+  // shown right away instead of only surfacing in the end-of-interview scorecard.
+  const [feedbackByIndex, setFeedbackByIndex] = useState<Record<number, GradeResult>>({});
 
   // Which per-question review cards are expanded to show the model answer.
   const [openReview, setOpenReview] = useState<Record<number, boolean>>({});
@@ -89,22 +93,44 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
   const send = async () => {
     if (!draft.trim()) return;
     if (stt.listening) stt.stop();
+    const lastQuestion = transcript[transcript.length - 1]?.content ?? '';
     const myTurn: MockTurn = { role: 'candidate', content: draft.trim() };
     const next = [...transcript, myTurn];
+    const myIndex = next.length - 1;
     setTranscript(next);
     setDraft('');
+    setStage('grading');
 
+    // Grade this answer right away so the candidate gets feedback before the
+    // next question shows up, instead of waiting for the final scorecard.
+    try {
+      const g = await gradeAnswer({
+        question: lastQuestion,
+        category: focusValue ?? 'General DevOps',
+        difficulty,
+        userAnswer: myTurn.content,
+      });
+      setProvider(g.provider);
+      setFeedbackByIndex((m) => ({ ...m, [myIndex]: g }));
+    } catch {
+      // Inline feedback is a bonus, not a gate. If grading fails, still let
+      // the candidate continue the interview.
+    }
+    setStage('reviewing');
+  };
+
+  const continueInterview = async () => {
     // If we have hit the question budget, go straight to the scorecard.
     if (questionCount >= MAX_QUESTIONS) {
-      await wrapUp(next);
+      await wrapUp(transcript);
       return;
     }
 
     setStage('thinking');
     try {
-      const r = await mockNext({ role, focus: focusValue, difficulty, transcript: next, questionCount, maxQuestions: MAX_QUESTIONS });
+      const r = await mockNext({ role, focus: focusValue, difficulty, transcript, questionCount, maxQuestions: MAX_QUESTIONS });
       setProvider(r.provider);
-      setTranscript([...next, { role: 'interviewer', content: r.message }]);
+      setTranscript((t) => [...t, { role: 'interviewer', content: r.message }]);
       setQuestionCount((c) => c + 1);
       setStage('interviewing');
     } catch (e) {
@@ -135,6 +161,7 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
     setQuestionCount(0);
     setDraft('');
     setScorecard(null);
+    setFeedbackByIndex({});
     setError('');
   };
 
@@ -154,7 +181,7 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {voiceMode && tts.supported && (stage === 'interviewing' || stage === 'thinking') && (
+          {voiceMode && tts.supported && (stage === 'interviewing' || stage === 'thinking' || stage === 'grading' || stage === 'reviewing') && (
             <button
               onClick={() => {
                 if (tts.enabled) tts.cancel();
@@ -169,7 +196,7 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
               <Icon name={tts.enabled ? 'volume' : 'volume-off'} size={18} />
             </button>
           )}
-          {(stage === 'interviewing' || stage === 'thinking') && (
+          {(stage === 'interviewing' || stage === 'thinking' || stage === 'grading' || stage === 'reviewing') && (
             <span className="mono hidden rounded-full border border-line bg-page px-2.5 py-1 text-[11px] text-fg-muted sm:inline">
               Q {Math.min(questionCount, MAX_QUESTIONS)} / {MAX_QUESTIONS}
             </span>
@@ -252,17 +279,39 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
       )}
 
       {/* Chat */}
-      {(stage === 'interviewing' || stage === 'thinking' || stage === 'summarizing') && (
+      {(stage === 'interviewing' || stage === 'grading' || stage === 'reviewing' || stage === 'thinking' || stage === 'summarizing') && (
         <>
           <div ref={scrollRef} className="max-h-[52vh] space-y-4 overflow-y-auto p-5 sm:p-6">
             {transcript.map((t, i) => (
-              <ChatBubble key={i} turn={t} />
+              <div key={i} className="space-y-2">
+                <ChatBubble turn={t} />
+                {t.role === 'candidate' && feedbackByIndex[i] && <InlineFeedback grade={feedbackByIndex[i]} />}
+              </div>
             ))}
+            {stage === 'grading' && <TypingBubble label="Grading your answer" />}
             {(stage === 'thinking' || stage === 'summarizing') && <TypingBubble label={stage === 'summarizing' ? 'Writing your scorecard' : undefined} />}
           </div>
 
           {/* Composer */}
           <div className="border-t border-line p-4 sm:p-5">
+            {stage === 'reviewing' ? (
+              <div className="flex flex-col items-center gap-3 text-center">
+                <p className="text-xs text-fg-faint">
+                  {questionCount >= MAX_QUESTIONS
+                    ? 'That was the last question.'
+                    : `Question ${Math.min(questionCount + 1, MAX_QUESTIONS)} of ${MAX_QUESTIONS} is next.`}
+                </p>
+                <Button onClick={continueInterview} icon="arrow-right" size="lg" className="w-full">
+                  {questionCount >= MAX_QUESTIONS ? 'See your scorecard' : 'Continue to next question'}
+                </Button>
+                {questionCount < MAX_QUESTIONS && (
+                  <button onClick={() => wrapUp(transcript)} className="text-xs font-medium text-fg-faint transition-colors hover:text-fg">
+                    End early and see scorecard
+                  </button>
+                )}
+              </div>
+            ) : (
+              <>
             {questionCount >= MAX_QUESTIONS && stage === 'interviewing' && (
               <p className="mb-2.5 text-center text-xs text-fg-faint">Last question. Your next answer wraps up the interview.</p>
             )}
@@ -324,6 +373,8 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
                 </button>
               )}
             </div>
+              </>
+            )}
           </div>
         </>
       )}
@@ -529,6 +580,42 @@ function ChatBubble({ turn }: { turn: MockTurn }) {
         }`}
       >
         {turn.content}
+      </div>
+    </div>
+  );
+}
+
+// Compact coach-style card shown right under a candidate's answer bubble with
+// an immediate score and a couple of highlights, before the next question.
+function InlineFeedback({ grade }: { grade: GradeResult }) {
+  const tone = grade.score >= 70 ? 'text-done' : grade.score >= 40 ? 'text-accent' : 'text-optional';
+  return (
+    <div className="flex gap-3">
+      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-card-2 text-fg-muted">
+        <Icon name="target" size={15} />
+      </span>
+      <div className="max-w-[82%] space-y-2.5 rounded-card border border-line bg-page px-4 py-3.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="mono text-[10px] uppercase tracking-eyebrow text-fg-faint">Feedback</span>
+          <span className={`mono text-sm font-semibold ${tone}`}>{grade.score}/100</span>
+        </div>
+        <p className="text-sm leading-relaxed text-fg">{grade.verdict}</p>
+        {(grade.strengths.length > 0 || grade.gaps.length > 0) && (
+          <div className="flex flex-wrap gap-1.5">
+            {grade.strengths.slice(0, 2).map((s, i) => (
+              <span key={`s${i}`} className="inline-flex items-center gap-1 rounded-full border border-done/30 bg-done/10 px-2 py-0.5 text-[11px] text-done">
+                <Icon name="check" size={11} strokeWidth={2.5} />
+                {s}
+              </span>
+            ))}
+            {grade.gaps.slice(0, 2).map((g, i) => (
+              <span key={`g${i}`} className="inline-flex items-center gap-1 rounded-full border border-optional/30 bg-optional/10 px-2 py-0.5 text-[11px] text-optional">
+                <Icon name="target" size={11} strokeWidth={2.5} />
+                {g}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

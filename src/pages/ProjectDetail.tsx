@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { projects } from '../data/projects';
 import { tracks } from '../data/tracks';
@@ -16,6 +17,8 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const project = projects.find((p) => p.id === id);
   const { projectPct, projectStepDone, toggleProjectStep } = useProgress();
+  const [openStep, setOpenStep] = useState<Record<number, boolean>>({});
+  const toggleOpenStep = (i: number) => setOpenStep((s) => ({ ...s, [i]: !s[i] }));
 
   if (!project) {
     return (
@@ -95,30 +98,50 @@ export default function ProjectDetail() {
             <div className="glass overflow-hidden rounded-card">
               {project.steps.map((step, i) => {
                 const done = projectStepDone(project.id, i);
+                const open = !!openStep[i];
                 return (
-                  <button
-                    key={i}
-                    onClick={() => toggleProjectStep(project.id, i)}
-                    className={`flex w-full items-center gap-4 px-5 py-4 text-left transition-colors hover:bg-card-2 ${
-                      i > 0 ? 'border-t border-line' : ''
-                    }`}
-                  >
-                    <span
-                      className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-all ${
-                        done ? 'border-transparent gradient-bg text-white' : 'border-line text-transparent'
-                      }`}
-                    >
-                      {done && <Icon name="check" size={14} strokeWidth={3} />}
-                    </span>
-                    <span className="mono text-xs text-fg-faint">{String(i + 1).padStart(2, '0')}</span>
-                    <span
-                      className={`flex-1 text-[15px] transition-colors ${
-                        done ? 'text-fg-muted line-through decoration-fg-faint/40' : 'font-medium text-fg'
-                      }`}
-                    >
-                      {step}
-                    </span>
-                  </button>
+                  <div key={i} className={i > 0 ? 'border-t border-line' : ''}>
+                    <div className="flex items-center gap-4 px-5 py-4 transition-colors hover:bg-card-2">
+                      <button
+                        onClick={() => toggleProjectStep(project.id, i)}
+                        aria-label={done ? 'Mark step not done' : 'Mark step done'}
+                        className={`grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 transition-all ${
+                          done ? 'border-transparent gradient-bg text-white' : 'border-line text-transparent'
+                        }`}
+                      >
+                        {done && <Icon name="check" size={14} strokeWidth={3} />}
+                      </button>
+                      <button
+                        onClick={() => toggleProjectStep(project.id, i)}
+                        className="flex flex-1 items-center gap-4 text-left"
+                      >
+                        <span className="mono text-xs text-fg-faint">{String(i + 1).padStart(2, '0')}</span>
+                        <span
+                          className={`flex-1 text-[15px] transition-colors ${
+                            done ? 'text-fg-muted line-through decoration-fg-faint/40' : 'font-medium text-fg'
+                          }`}
+                        >
+                          {step.title}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => toggleOpenStep(i)}
+                        aria-expanded={open}
+                        aria-label={open ? 'Hide explanation' : 'Show explanation'}
+                        className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-fg-faint transition-colors hover:bg-card-2 hover:text-accent"
+                      >
+                        <Icon name="chevron-down" size={16} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+                    <div className={`collapsible ${open ? 'open' : ''}`}>
+                      <div className="collapsible-inner">
+                        <div className="flex gap-3 px-5 pb-4 pl-16">
+                          <Icon name="sparkle" size={15} className="mt-0.5 shrink-0 text-accent" />
+                          <p className="text-sm leading-relaxed text-fg-muted">{step.how}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>

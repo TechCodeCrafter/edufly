@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Logo } from './Logo';
+import { XIcon } from './XIcon';
 
 export function Footer() {
   return (
@@ -11,6 +12,15 @@ export function Footer() {
             <p className="mt-4 text-sm leading-relaxed text-fg-faint">
               The free, structured path to becoming a DevOps engineer. Built for beginners, trusted by engineers.
             </p>
+            <a
+              href="https://x.com/uday_devops"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Follow on X"
+              className="mt-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-fg-muted transition-colors hover:text-fg"
+            >
+              <XIcon size={15} />
+            </a>
           </div>
           <div className="grid grid-cols-2 gap-x-16 gap-y-3">
             <Link to="/" className="text-sm text-fg-muted transition-colors hover:text-fg">Roadmap</Link>
