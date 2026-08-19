@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button, Ring } from '../ui';
 import { Icon } from '../Icon';
 import { FallbackNote } from './QuickPractice';
+import { ShareToXButton } from '../ShareToX';
 import { gradeAnswer, mockNext, mockSummary, type GradeResult, type MockTurn, type ScoreCard, type Provider } from '../../lib/ai';
 import { useSpeechToText, useTextToSpeech } from '../../lib/useVoice';
 import type { Difficulty } from '../../data/types';
@@ -33,6 +34,10 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
   // Which per-question review cards are expanded to show the model answer.
   const [openReview, setOpenReview] = useState<Record<number, boolean>>({});
   const toggleReview = (i: number) => setOpenReview((o) => ({ ...o, [i]: !o[i] }));
+
+  // Which inline feedback cards have their model-answer panel expanded.
+  const [openModel, setOpenModel] = useState<Record<number, boolean>>({});
+  const toggleModel = (i: number) => setOpenModel((o) => ({ ...o, [i]: !o[i] }));
 
   // Voice: speech-to-text for answers, text-to-speech for questions.
   const stt = useSpeechToText();
@@ -117,6 +122,26 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
       // the candidate continue the interview.
     }
     setStage('reviewing');
+  };
+
+  // Discard the last answer and its feedback so the same question can be
+  // answered again fresh, in place of the "study the model answer, then try
+  // again" advice that would otherwise be a dead end.
+  const tryAgain = () => {
+    const lastIndex = transcript.length - 1;
+    setTranscript((t) => t.slice(0, t.length - 1));
+    setFeedbackByIndex((m) => {
+      const next = { ...m };
+      delete next[lastIndex];
+      return next;
+    });
+    setOpenModel((m) => {
+      const next = { ...m };
+      delete next[lastIndex];
+      return next;
+    });
+    setDraft('');
+    setStage('interviewing');
   };
 
   const continueInterview = async () => {
@@ -285,7 +310,9 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
             {transcript.map((t, i) => (
               <div key={i} className="space-y-2">
                 <ChatBubble turn={t} />
-                {t.role === 'candidate' && feedbackByIndex[i] && <InlineFeedback grade={feedbackByIndex[i]} />}
+                {t.role === 'candidate' && feedbackByIndex[i] && (
+                  <InlineFeedback grade={feedbackByIndex[i]} open={!!openModel[i]} onToggle={() => toggleModel(i)} />
+                )}
               </div>
             ))}
             {stage === 'grading' && <TypingBubble label="Grading your answer" />}
@@ -301,9 +328,14 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
                     ? 'That was the last question.'
                     : `Question ${Math.min(questionCount + 1, MAX_QUESTIONS)} of ${MAX_QUESTIONS} is next.`}
                 </p>
-                <Button onClick={continueInterview} icon="arrow-right" size="lg" className="w-full">
-                  {questionCount >= MAX_QUESTIONS ? 'See your scorecard' : 'Continue to next question'}
-                </Button>
+                <div className="flex w-full flex-col gap-2 sm:flex-row">
+                  <Button onClick={tryAgain} variant="light" icon="refresh" size="lg" className="w-full sm:w-auto">
+                    Try this question again
+                  </Button>
+                  <Button onClick={continueInterview} icon="arrow-right" size="lg" className="w-full flex-1">
+                    {questionCount >= MAX_QUESTIONS ? 'See your scorecard' : 'Continue to next question'}
+                  </Button>
+                </div>
                 {questionCount < MAX_QUESTIONS && (
                   <button onClick={() => wrapUp(transcript)} className="text-xs font-medium text-fg-faint transition-colors hover:text-fg">
                     End early and see scorecard
@@ -390,7 +422,14 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
                 <p className="font-display text-2xl font-bold text-fg">{scorecard.overall}<span className="text-base text-fg-faint">/100</span></p>
               </div>
             </div>
-            <FallbackNote provider={provider} />
+            <div className="flex items-center gap-3">
+              <FallbackNote provider={provider} />
+              <ShareToXButton
+                size="sm"
+                label="Share score"
+                text={`I scored ${scorecard.overall}/100 in a ${role} mock interview on Edufly. Practicing free at`}
+              />
+            </div>
           </div>
 
           <p className="text-sm leading-relaxed text-fg">{scorecard.summary}</p>
@@ -587,7 +626,7 @@ function ChatBubble({ turn }: { turn: MockTurn }) {
 
 // Compact coach-style card shown right under a candidate's answer bubble with
 // an immediate score and a couple of highlights, before the next question.
-function InlineFeedback({ grade }: { grade: GradeResult }) {
+function InlineFeedback({ grade, open, onToggle }: { grade: GradeResult; open: boolean; onToggle: () => void }) {
   const tone = grade.score >= 70 ? 'text-done' : grade.score >= 40 ? 'text-accent' : 'text-optional';
   return (
     <div className="flex gap-3">
@@ -614,6 +653,26 @@ function InlineFeedback({ grade }: { grade: GradeResult }) {
                 {g}
               </span>
             ))}
+          </div>
+        )}
+        {grade.improved && (
+          <div className="-mx-1">
+            <button
+              onClick={onToggle}
+              aria-expanded={open}
+              className="flex items-center gap-1.5 rounded-md px-1 py-1 text-xs font-semibold text-accent transition-colors hover:text-fg"
+            >
+              <Icon name="sparkle" size={12} />
+              {open ? 'Hide model answer' : 'Study the model answer'}
+              <Icon name="chevron-down" size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+            </button>
+            <div className={`collapsible ${open ? 'open' : ''}`}>
+              <div className="collapsible-inner">
+                <div className="mt-1 rounded-btn border border-line bg-card p-3.5">
+                  <p className="text-sm leading-relaxed text-fg">{grade.improved}</p>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

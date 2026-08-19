@@ -4,6 +4,7 @@ import { projects } from '../data/projects';
 import { tracks } from '../data/tracks';
 import { useProgress } from '../store/progress';
 import { Button, Ring, Glass } from '../components/ui';
+import { ShareToXButton } from '../components/ShareToX';
 import { Icon } from '../components/Icon';
 import { DarkHeader } from '../components/DarkHeader';
 
@@ -68,6 +69,15 @@ export default function ProjectDetail() {
             <p className="mt-3 text-sm text-fg-muted">
               {doneCount} of {project.steps.length} steps
             </p>
+            {complete && (
+              <ShareToXButton
+                size="sm"
+                variant="light"
+                label="Share on X"
+                className="mt-4"
+                text={`I just shipped "${project.title}" on Edufly, the free structured DevOps roadmap.`}
+              />
+            )}
           </Glass>
         </div>
       </DarkHeader>

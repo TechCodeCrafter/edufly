@@ -271,6 +271,14 @@ function scoreContent(userAnswer: string, reference: string, expectedKeywords: s
 // Deterministic, offline grader for a single Quick Practice answer. Content
 // aware, honest about being a heuristic, never pretends to be the AI.
 function fallbackGrade(b: GradeBody): GradeResult {
+  // Quick Practice always sends its own modelAnswer. Mock interview questions
+  // are asked live and do not, so look the question up in the same bank the
+  // mock summary uses. That gives the same content-aware scoring and a real
+  // model answer to study, instead of a generic on-topic guess.
+  const bankEntry = !b.modelAnswer ? bankEntryForQuestion(b.question) : null;
+  const reference = b.modelAnswer ?? bankEntry?.model ?? '';
+  const keywords = bankEntry?.keywords ?? [];
+
   const ans = (b.userAnswer || '').trim();
   if (!ans) {
     return {
@@ -278,12 +286,12 @@ function fallbackGrade(b: GradeBody): GradeResult {
       verdict: 'No answer was given, so there is nothing to assess yet.',
       strengths: [],
       gaps: ['Write out your answer, even a rough one, to get feedback.'],
-      improved: b.modelAnswer ?? '',
+      improved: reference,
       provider: 'fallback',
     };
   }
 
-  const cs = scoreContent(ans, b.modelAnswer ?? '');
+  const cs = scoreContent(ans, reference, keywords);
   const score = cs.score;
 
   let verdict: string;
@@ -309,7 +317,7 @@ function fallbackGrade(b: GradeBody): GradeResult {
     verdict,
     strengths: strengths.slice(0, 3),
     gaps: gaps.slice(0, 3),
-    improved: b.modelAnswer ?? '',
+    improved: reference,
     provider: 'fallback',
   };
 }

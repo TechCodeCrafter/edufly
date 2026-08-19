@@ -5,6 +5,7 @@ import { Ring, Bar, Button, EyebrowPill, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { StatCard, WeekStrip } from '../components/cards';
 import { DarkHeader } from '../components/DarkHeader';
+import { ShareToXButton } from '../components/ShareToX';
 import type { IconName } from '../components/Icon';
 
 interface Achievement {
@@ -70,6 +71,13 @@ export default function Dashboard() {
               <p className="mt-2 text-base text-fg-muted">
                 {topicsDone} of {topicsTotal} topics done {'\u00b7'} {overallPct}% of the roadmap
               </p>
+              <ShareToXButton
+                size="sm"
+                variant="light"
+                label="Share progress"
+                className="mt-4"
+                text={`I'm Level ${level} on Edufly with a ${streakDays}-day streak, ${topicsDone}/${topicsTotal} topics done.`}
+              />
             </div>
           </div>
           <Glass className="w-full max-w-sm p-5">

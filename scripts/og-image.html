@@ -1,0 +1,164 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<style>
+  @font-face {
+    font-family: 'Space Grotesk';
+    src: local('Space Grotesk');
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0a;
+    overflow: hidden;
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+  }
+  .stage {
+    position: relative;
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0a;
+  }
+  .glow-1 {
+    position: absolute;
+    top: -220px;
+    right: -180px;
+    width: 620px;
+    height: 620px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(16,185,129,0.35) 0%, rgba(16,185,129,0) 70%);
+  }
+  .glow-2 {
+    position: absolute;
+    bottom: -260px;
+    left: -160px;
+    width: 560px;
+    height: 560px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(132,204,22,0.22) 0%, rgba(132,204,22,0) 70%);
+  }
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 78px 88px;
+  }
+  .brand-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 40px;
+  }
+  .brand-mark {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #10b981, #84cc16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 40px rgba(16,185,129,0.45);
+  }
+  .brand-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 30px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+  }
+  .brand-name .fly {
+    background: linear-gradient(135deg, #10b981, #84cc16);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 64px;
+    line-height: 1.08;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    max-width: 920px;
+  }
+  h1 .accent {
+    background: linear-gradient(135deg, #10b981, #84cc16);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  p.sub {
+    margin-top: 22px;
+    font-size: 24px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.72);
+    max-width: 760px;
+    font-weight: 500;
+  }
+  .stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 44px;
+  }
+  .chip {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+  }
+  .chip .num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  .chip .lbl {
+    font-size: 17px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+    <div class="grid-overlay"></div>
+    <div class="content">
+      <div class="brand-row">
+        <div class="brand-mark">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/>
+          </svg>
+        </div>
+        <div class="brand-name">Edu<span class="fly">fly</span></div>
+      </div>
+      <h1>Become a <span class="accent">DevOps engineer</span>, the structured way</h1>
+      <p class="sub">One clear path from Linux to Platform Engineering. Free and open, built for engineers who ship.</p>
+      <div class="stats">
+        <div class="chip"><span class="num">95</span><span class="lbl">topics</span></div>
+        <div class="chip"><span class="num">22</span><span class="lbl">projects</span></div>
+        <div class="chip"><span class="num">62+</span><span class="lbl">questions</span></div>
+        <div class="chip"><span class="num">14</span><span class="lbl">tracks</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
