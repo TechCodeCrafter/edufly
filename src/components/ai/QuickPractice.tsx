@@ -3,6 +3,8 @@ import { Button } from '../ui';
 import { Icon } from '../Icon';
 import { ScoreMeter } from './ScoreMeter';
 import { gradeAnswer, type GradeResult } from '../../lib/ai';
+import { logAttempt } from '../../lib/attempts';
+import { useAuth } from '../../store/auth';
 import type { Question } from '../../data/types';
 import { diffColor, diffLabel } from '../ui';
 
@@ -25,6 +27,7 @@ export function QuickPractice({
   const [result, setResult] = useState<GradeResult | null>(null);
   const [showModel, setShowModel] = useState(false);
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   const submit = async () => {
     if (!answer.trim()) return;
@@ -40,6 +43,19 @@ export function QuickPractice({
       });
       setResult(r);
       setPhase('graded');
+      if (user) {
+        void logAttempt({
+          userId: user.id,
+          source: 'quick_practice',
+          question: question.question,
+          category: question.category,
+          difficulty: question.difficulty,
+          score: r.score,
+          covered: r.strengths,
+          missing: r.gaps,
+          provider: r.provider,
+        });
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.');
       setPhase('error');

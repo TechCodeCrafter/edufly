@@ -1,6 +1,9 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { tracks, allTopics } from '../data/tracks';
 import { useProgress } from '../store/progress';
+import { useAuth } from '../store/auth';
+import { fetchWeakTopics, type TopicPerformance } from '../lib/attempts';
 import { Ring, Bar, Button, EyebrowPill, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { StatCard, WeekStrip } from '../components/cards';
@@ -29,6 +32,22 @@ const achievements: Achievement[] = [
 
 export default function Dashboard() {
   const p = useProgress();
+  const { user } = useAuth();
+  const [weakTopics, setWeakTopics] = useState<TopicPerformance[]>([]);
+
+  useEffect(() => {
+    if (!user) {
+      setWeakTopics([]);
+      return;
+    }
+    let cancelled = false;
+    fetchWeakTopics(user.id).then((topics) => {
+      if (!cancelled) setWeakTopics(topics);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
   const {
     level,
     totalXP,
@@ -158,6 +177,35 @@ export default function Dashboard() {
               </div>
               <WeekStrip streakDates={streakDates} />
             </section>
+
+            {/* Weak topics, driven by real interview scores */}
+            {weakTopics.length > 0 && (
+              <section className="glass rounded-card p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="font-display text-base font-bold text-fg">Your weakest topics</h2>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint">
+                    <Icon name="target" size={14} />
+                    From your interviews
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {weakTopics.slice(0, 4).map((t) => (
+                    <div key={t.category}>
+                      <div className="mb-1.5 flex items-center justify-between gap-2">
+                        <span className="truncate text-sm font-medium text-fg">{t.category}</span>
+                        <span className="mono shrink-0 text-xs text-fg-faint">
+                          {t.avgScore}/100 {'\u00b7'} {t.attempts} {t.attempts === 1 ? 'attempt' : 'attempts'}
+                        </span>
+                      </div>
+                      <Bar value={t.avgScore} height={6} />
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs leading-relaxed text-fg-faint">
+                  Scored from your actual Quick Practice and mock interview answers. Practice these first.
+                </p>
+              </section>
+            )}
 
             {/* Up next */}
             <section>

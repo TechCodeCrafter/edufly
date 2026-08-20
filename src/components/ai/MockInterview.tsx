@@ -4,6 +4,8 @@ import { Icon } from '../Icon';
 import { FallbackNote } from './QuickPractice';
 import { ShareToXButton } from '../ShareToX';
 import { gradeAnswer, mockNext, mockSummary, type GradeResult, type MockTurn, type ScoreCard, type Provider } from '../../lib/ai';
+import { logAttempt } from '../../lib/attempts';
+import { useAuth } from '../../store/auth';
 import { useSpeechToText, useTextToSpeech } from '../../lib/useVoice';
 import type { Difficulty } from '../../data/types';
 
@@ -26,6 +28,7 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
   const [scorecard, setScorecard] = useState<ScoreCard | null>(null);
   const [provider, setProvider] = useState<Provider>('fallback');
   const [error, setError] = useState('');
+  const { user } = useAuth();
 
   // Feedback for a candidate answer, keyed by that turn's index in transcript,
   // shown right away instead of only surfacing in the end-of-interview scorecard.
@@ -171,6 +174,21 @@ export function MockInterview({ onClose }: { onClose?: () => void }) {
       setProvider(r.provider);
       setScorecard(r.scorecard ?? null);
       setStage('done');
+      if (user && r.scorecard?.review) {
+        for (const item of r.scorecard.review) {
+          void logAttempt({
+            userId: user.id,
+            source: 'mock_interview',
+            question: item.question,
+            category: focusValue ?? 'General DevOps',
+            difficulty,
+            score: item.score,
+            covered: item.covered,
+            missing: item.missing,
+            provider: r.provider,
+          });
+        }
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not build the scorecard.');
       setStage('error');
