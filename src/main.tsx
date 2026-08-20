@@ -8,6 +8,8 @@ import { ProgressProvider } from './store/progress';
 import { AuthProvider } from './store/auth';
 import { SyncStatusProvider } from './store/sync';
 import { CloudSync } from './store/cloudSync';
+import { WelcomeProvider } from './store/welcome';
+import { WelcomeModal } from './components/WelcomeModal';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,8 +18,11 @@ createRoot(document.getElementById('root')!).render(
         <ProgressProvider>
           <AuthProvider>
             <SyncStatusProvider>
-              <CloudSync />
-              <App />
+              <WelcomeProvider>
+                <CloudSync />
+                <WelcomeModal />
+                <App />
+              </WelcomeProvider>
             </SyncStatusProvider>
           </AuthProvider>
         </ProgressProvider>

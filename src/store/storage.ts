@@ -28,4 +28,12 @@ export const safeStorage = {
       memory[key] = value;
     }
   },
+  remove(key: string) {
+    try {
+      if (usable) window.localStorage.removeItem(key);
+      delete memory[key];
+    } catch {
+      delete memory[key];
+    }
+  },
 };

@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useAuth } from './auth';
 import { useProgress, type PersistShape, type TopicStatus } from './progress';
 import { useSyncStatus } from './sync';
+import { useWelcome } from './welcome';
 
 // Shape of the row in the `user_progress` table (snake_case columns).
 interface ProgressRow {
@@ -107,12 +108,14 @@ function isEmptyProgress(s: PersistShape): boolean {
  * for as long as the learner stays signed in. Renders nothing.
  */
 export function CloudSync() {
-  const { user, cloudEnabled } = useAuth();
+  const { user, cloudEnabled, justSignedIn, clearJustSignedIn } = useAuth();
   const progress = useProgress();
   const { setStatus } = useSyncStatus();
+  const welcome = useWelcome();
   const mergedForUser = useRef<string | null>(null);
   const pushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipNextPush = useRef(false);
+  const wasSignedIn = useRef(false);
 
   const local: PersistShape = {
     topics: progress.topics,
@@ -147,13 +150,30 @@ export function CloudSync() {
       }
 
       const cloud = data ? fromRow(data as ProgressRow) : null;
-      const merged = cloud && !isEmptyProgress(cloud) ? mergeProgress(local, cloud) : local;
+      const hadCloudProgress = Boolean(cloud && !isEmptyProgress(cloud));
+      const merged = hadCloudProgress ? mergeProgress(local, cloud as PersistShape) : local;
 
       skipNextPush.current = true;
       progress.hydrate(merged);
 
       await supabase.from('user_progress').upsert(toRow(user.id, merged), { onConflict: 'user_id' });
-      if (!cancelled) setStatus('synced');
+      if (cancelled) return;
+      setStatus('synced');
+
+      // Only greet the learner right after a real sign-in action, not on
+      // every page load where a session simply gets restored.
+      if (justSignedIn) {
+        const name = (user.user_metadata?.full_name as string | undefined) ?? user.email ?? 'there';
+        welcome.show({
+          name,
+          avatar: user.user_metadata?.avatar_url as string | undefined,
+          topicsDone: Object.values(merged.topics).filter((s) => s === 'done').length,
+          masteredCount: merged.mastered.length,
+          streakDays: merged.streakDays,
+          hadCloudProgress,
+        });
+        clearJustSignedIn();
+      }
     })();
 
     return () => {
@@ -163,9 +183,22 @@ export function CloudSync() {
   }, [user, cloudEnabled]);
 
   // Reset the merge guard on sign out so a later sign-in (possibly a
-  // different account) merges again instead of being skipped.
+  // different account) merges again instead of being skipped. Also clear
+  // this device's local progress: it has already been backed up to the
+  // account that just signed out, so leaving it visible on this device
+  // would let the next person to use this browser see the previous
+  // learner's topics, mastered questions, and streak.
   useEffect(() => {
-    if (!user) mergedForUser.current = null;
+    if (user) {
+      wasSignedIn.current = true;
+      return;
+    }
+    mergedForUser.current = null;
+    if (wasSignedIn.current) {
+      wasSignedIn.current = false;
+      progress.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Debounced push of every subsequent local change while signed in.
