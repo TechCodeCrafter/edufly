@@ -8,6 +8,9 @@ import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Interview from './pages/Interview';
 import Dashboard from './pages/Dashboard';
+import Comparisons from './pages/Comparisons';
+import ComparisonDetail from './pages/ComparisonDetail';
+import Leaderboard from './pages/Leaderboard';
 import NotFound from './pages/NotFound';
 
 function ScrollToTop() {
@@ -31,6 +34,9 @@ export default function App() {
           <Route path="/project/:id" element={<ProjectDetail />} />
           <Route path="/interview" element={<Interview />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/compare" element={<Comparisons />} />
+          <Route path="/compare/:id" element={<ComparisonDetail />} />
+          <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

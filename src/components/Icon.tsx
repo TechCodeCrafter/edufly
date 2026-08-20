@@ -7,7 +7,8 @@ export type IconName =
   | 'compass' | 'book' | 'flame' | 'zap' | 'check' | 'clock' | 'chevron-down'
   | 'arrow-right' | 'play' | 'lock' | 'search' | 'sun' | 'moon' | 'menu' | 'x'
   | 'bookmark' | 'trophy' | 'circle' | 'trending-up' | 'external' | 'chevron-right'
-  | 'list' | 'spine' | 'path' | 'sparkle' | 'target' | 'mic' | 'mic-off' | 'volume' | 'volume-off' | 'log-out' | 'refresh';
+  | 'list' | 'spine' | 'path' | 'sparkle' | 'target' | 'mic' | 'mic-off' | 'volume' | 'volume-off' | 'log-out' | 'refresh'
+  | 'compare' | 'users' | 'medal';
 
 const paths: Record<IconName, React.ReactNode> = {
   terminal: <><polyline points="4 17 10 11 4 5" /><line x1="12" y1="19" x2="20" y2="19" /></>,
@@ -56,6 +57,9 @@ const paths: Record<IconName, React.ReactNode> = {
   'volume-off': <><polygon points="4 9 8 9 13 5 13 19 8 15 4 15 4 9" /><line x1="23" y1="9" x2="17" y2="15" /><line x1="17" y1="9" x2="23" y2="15" /></>,
   'log-out': <><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></>,
   refresh: <><path d="M3 12a9 9 0 0 1 15.3-6.4L21 8" /><polyline points="21 3 21 8 16 8" /><path d="M21 12a9 9 0 0 1-15.3 6.4L3 16" /><polyline points="3 21 3 16 8 16" /></>,
+  compare: <><path d="M8 3 4 7l4 4" /><path d="M4 7h10" /><path d="M16 21l4-4-4-4" /><path d="M20 17H10" /></>,
+  users: <><circle cx="8.5" cy="8" r="3" /><path d="M2.5 20a6 6 0 0 1 12 0" /><circle cx="17.5" cy="8.5" r="2.4" /><path d="M15.3 20a5 5 0 0 1 7.9-3.6" /></>,
+  medal: <><circle cx="12" cy="14" r="6" /><path d="M9 2h6l-1.5 7-3-2-3 2z" /><circle cx="12" cy="14" r="2.3" /></>,
 };
 
 export function Icon({ name, size = 20, className = '', strokeWidth = 2 }: IconProps) {

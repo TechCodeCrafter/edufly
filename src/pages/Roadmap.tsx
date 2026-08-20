@@ -8,6 +8,9 @@ import { useProgress } from '../store/progress';
 import { Button, Ring, Bar, Glass, EyebrowPill } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { ModuleCard, type RecKind } from '../components/cards';
+import { Heatmap } from '../components/Heatmap';
+import { comparisons, comparisonCategories } from '../data/comparisons';
+import { LeaderboardPreview } from '../components/Leaderboard';
 
 type ViewMode = 'grid' | 'spine' | 'path';
 type RoadMode = 'guided' | 'browse';
@@ -18,7 +21,7 @@ const REC_BY_TRACK: Record<string, RecKind> = { linux: 'start' };
 export default function Roadmap() {
   const [view, setView] = useState<ViewMode>('grid');
   const [mode, setMode] = useState<RoadMode>('guided');
-  const { totalXP, streakDays, trackPct, lastTopicId, recentTopics, topicStatus, overallPct } = useProgress();
+  const { totalXP, streakDays, streakDates, trackPct, lastTopicId, recentTopics, topicStatus, overallPct } = useProgress();
 
   // Only resume from a topic the user has actually opened. No fake fallback.
   const resumeTopic = lastTopicId ? allTopics.find((t) => t.id === lastTopicId) : undefined;
@@ -173,6 +176,15 @@ export default function Roadmap() {
                 <span className="mono font-semibold text-fg">{totalXP.toLocaleString()} XP</span>
               </span>
             </div>
+            {streakDates.length > 0 && (
+              <div className="mt-5 border-t border-line pt-5">
+                <div className="mb-2.5 flex items-center justify-between">
+                  <span className="mono text-[10px] uppercase tracking-eyebrow text-fg-faint">Last 14 weeks</span>
+                  <span className="text-[11px] text-fg-faint">{streakDates.length} active {streakDates.length === 1 ? 'day' : 'days'}</span>
+                </div>
+                <Heatmap streakDates={streakDates} weeks={14} cellSize={9} />
+              </div>
+            )}
           </Glass>
         </div>
 
@@ -293,8 +305,67 @@ export default function Roadmap() {
             teaser="Mock interviews with live AI feedback"
           />
         </div>
+
+        {/* Tech concepts compared */}
+        <ComparisonsTeaser />
+
+        {/* Public leaderboard preview */}
+        <div className="mt-16">
+          <LeaderboardPreview />
+        </div>
       </div>
     </>
+  );
+}
+
+/* ----------------------------- ComparisonsTeaser ----------------------------- */
+function ComparisonsTeaser() {
+  const preview = comparisons.slice(0, 3);
+  return (
+    <div className="mt-16">
+      <div className="mb-6 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <EyebrowPill dot className="mb-3">New</EyebrowPill>
+          <h2 className="section-title text-fg">Tech concepts compared</h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-fg-muted">
+            {`Side-by-side breakdowns of the concepts interviewers love to ask about, ${comparisons.length} pairs and counting.`}
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {comparisonCategories.slice(0, 6).map((c) => (
+          <span key={c} className="rounded-full border border-line bg-card px-3 py-1.5 text-xs font-medium text-fg-muted">
+            {c}
+          </span>
+        ))}
+      </div>
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {preview.map((c) => (
+          <Link
+            key={c.id}
+            to={`/compare/${c.id}`}
+            className="group glass flex flex-col rounded-card p-5 transition-all hover:-translate-y-0.5 hover:shadow-lift"
+          >
+            <span className="mono self-start rounded-full bg-accent/10 px-2.5 py-1 text-[10px] uppercase tracking-eyebrow text-accent">
+              {c.category}
+            </span>
+            <h3 className="mt-3 font-display text-base font-bold text-fg">{c.title}</h3>
+            <p className="mt-1.5 flex-1 text-sm leading-snug text-fg-muted">{c.tagline}</p>
+            <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
+              Compare
+              <Icon name="arrow-right" size={15} className="transition-transform group-hover:translate-x-1" />
+            </span>
+          </Link>
+        ))}
+      </div>
+      <Link
+        to="/compare"
+        className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:opacity-80"
+      >
+        {`See all ${comparisons.length} comparisons`}
+        <Icon name="arrow-right" size={15} />
+      </Link>
+    </div>
   );
 }
 

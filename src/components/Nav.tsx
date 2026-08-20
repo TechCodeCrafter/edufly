@@ -10,13 +10,16 @@ import { useTheme } from '../store/theme';
 const links = [
   { to: '/', label: 'Roadmap' },
   { to: '/projects', label: 'Projects' },
+  { to: '/compare', label: 'Compare' },
   { to: '/interview', label: 'Interview' },
+  { to: '/leaderboard', label: 'Leaderboard' },
   { to: '/dashboard', label: 'Dashboard' },
 ];
 
 function isActive(pathname: string, to: string) {
   if (to === '/') return pathname === '/' || pathname.startsWith('/topic') || pathname.startsWith('/track');
   if (to === '/projects') return pathname.startsWith('/projects') || pathname.startsWith('/project/');
+  if (to === '/compare') return pathname.startsWith('/compare');
   return pathname.startsWith(to);
 }
 

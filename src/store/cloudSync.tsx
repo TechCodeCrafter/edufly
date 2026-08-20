@@ -46,6 +46,16 @@ function isoDate(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+// First name only, never the full email, for anything shown on a public
+// leaderboard. Falls back to "Learner" if neither is available.
+function firstNameFor(user: { user_metadata?: { full_name?: string }; email?: string }): string {
+  const full = user.user_metadata?.full_name?.trim();
+  if (full) return full.split(' ')[0];
+  const local = user.email?.split('@')[0];
+  if (local) return local.charAt(0).toUpperCase() + local.slice(1);
+  return 'Learner';
+}
+
 // Consecutive-days-ending-today streak, same rule progress.tsx uses.
 function computeStreak(dates: string[]): number {
   const set = new Set(dates);
@@ -218,6 +228,23 @@ export function CloudSync() {
         .from('user_progress')
         .upsert(toRow(user.id, local), { onConflict: 'user_id' });
       setStatus(error ? 'error' : 'synced');
+
+      // Keep the public leaderboard row in sync with the same real stats
+      // already shown on the Dashboard. First-name-only, no email, no
+      // full progress detail, just the counts that are already public
+      // elsewhere in the app (streak, mastered count, topics done).
+      await client.from('leaderboard_entries').upsert(
+        {
+          user_id: user.id,
+          display_name: firstNameFor(user),
+          avatar_url: (user.user_metadata?.avatar_url as string | undefined) ?? null,
+          streak_days: progress.streakDays,
+          mastered_count: progress.masteredCount,
+          topics_done: progress.topicsDone,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' }
+      );
     }, 1200);
 
     return () => {
@@ -234,6 +261,8 @@ export function CloudSync() {
     progress.streakDays,
     progress.streakDates,
     progress.lastTopicId,
+    progress.masteredCount,
+    progress.topicsDone,
   ]);
 
   return null;

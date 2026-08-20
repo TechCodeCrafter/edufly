@@ -7,6 +7,7 @@ import { fetchWeakTopics, type TopicPerformance } from '../lib/attempts';
 import { Ring, Bar, Button, EyebrowPill, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { StatCard, WeekStrip } from '../components/cards';
+import { Heatmap } from '../components/Heatmap';
 import { DarkHeader } from '../components/DarkHeader';
 import { ShareToXButton } from '../components/ShareToX';
 import type { IconName } from '../components/Icon';
@@ -176,6 +177,15 @@ export default function Dashboard() {
                 </span>
               </div>
               <WeekStrip streakDates={streakDates} />
+              {streakDates.length > 0 && (
+                <div className="mt-5 border-t border-line pt-4">
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <span className="mono text-[10px] uppercase tracking-eyebrow text-fg-faint">Last 24 weeks</span>
+                    <span className="text-[11px] text-fg-faint">{streakDates.length} active days</span>
+                  </div>
+                  <Heatmap streakDates={streakDates} weeks={24} cellSize={10} />
+                </div>
+              )}
             </section>
 
             {/* Weak topics, driven by real interview scores */}
