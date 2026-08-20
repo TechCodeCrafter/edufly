@@ -48,7 +48,7 @@ function pickProvider(): { provider: Provider; key: string; model: string } {
     return { provider: 'openai', key: process.env.OPENAI_API_KEY, model: process.env.OPENAI_MODEL || 'gpt-4o-mini' };
   }
   if (process.env.ANTHROPIC_API_KEY) {
-    return { provider: 'anthropic', key: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest' };
+    return { provider: 'anthropic', key: process.env.ANTHROPIC_API_KEY, model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5' };
   }
   return { provider: 'fallback', key: '', model: '' };
 }
@@ -77,7 +77,10 @@ async function callLLM(messages: ChatMessage[], opts: { json?: boolean; maxToken
     });
     if (!res.ok) throw new Error(`anthropic ${res.status}: ${await res.text()}`);
     const data = await res.json();
-    return data?.content?.[0]?.text ?? '';
+    const textBlock = Array.isArray(data?.content) ? data.content.find((c: any) => c?.type === 'text') : null;
+    const out = textBlock?.text ?? data?.content?.[0]?.text ?? '';
+    if (!out) throw new Error('anthropic empty response: ' + JSON.stringify(data).slice(0, 800));
+    return out;
   }
 
   // OpenAI chat-completions.
@@ -129,6 +132,18 @@ async function handleGrade(b: GradeBody): Promise<GradeResult> {
   if (provider === 'fallback') {
     return fallbackGrade(b);
   }
+
+  try {
+    return await handleGradeLive(b, provider);
+  } catch (err) {
+    // A live provider hiccup (bad model id, rate limit, timeout, outage) should
+    // never take down grading. Degrade to the offline scorer instead.
+    console.error('grade live provider failed, falling back:', err instanceof Error ? err.message : err);
+    return fallbackGrade(b);
+  }
+}
+
+async function handleGradeLive(b: GradeBody, provider: Provider): Promise<GradeResult> {
 
   const system = [
     'You are a senior DevOps hiring manager running a technical interview.',
@@ -353,6 +368,17 @@ async function handleMock(b: MockBody): Promise<MockResult> {
     return fallbackMock(b);
   }
 
+  try {
+    return await handleMockLive(b, provider);
+  } catch (err) {
+    // A live provider hiccup should never take down the interview. Degrade to
+    // the offline scorer/question bank instead of hard-failing the request.
+    console.error('mock live provider failed, falling back:', err instanceof Error ? err.message : err);
+    return fallbackMock(b);
+  }
+}
+
+async function handleMockLive(b: MockBody, provider: Provider): Promise<MockResult> {
   if (b.stage === 'summary') {
     const system = [
       'You are a senior DevOps hiring manager who just finished a mock interview.',
