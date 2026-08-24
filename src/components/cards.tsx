@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from './Icon';
-import { Ring, Bar, IconTile } from './ui';
+import { Bar, IconTile } from './ui';
 import { useProgress } from '../store/progress';
 import type { Track, Topic, Project } from '../data/types';
 import { projects } from '../data/projects';
@@ -171,10 +171,11 @@ function ModuleCardInner({
       <div className="flex items-start gap-3.5">
         <IconTile name={track.icon as any} />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="truncate font-display text-lg font-bold tracking-tight2 text-fg">{track.name}</h3>
+          <div className="flex items-start gap-2">
+            {/* Titles wrap to two lines instead of truncating mid-word. */}
+            <h3 className="line-clamp-2 font-display text-lg font-bold leading-snug tracking-tight2 text-fg">{track.name}</h3>
             {track.popular && (
-              <span className="mono shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-eyebrow text-accent">
+              <span className="mono mt-1 shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-eyebrow text-accent">
                 Popular
               </span>
             )}
@@ -183,7 +184,6 @@ function ModuleCardInner({
             <p className="mt-1.5 line-clamp-2 text-sm font-medium leading-snug text-fg-muted">{track.action}</p>
           )}
         </div>
-        <Ring value={pct} size={42} stroke={4} />
       </div>
 
       {/* Badge row: difficulty + topic count + estimated time + projects */}
@@ -280,11 +280,15 @@ function ModuleCardInner({
   );
 }
 
-// A more prominent, color-coded difficulty badge (pill form) for the card badge row.
+// Difficulty pill, shown only when it carries real information. 13 of 14
+// tracks start at beginner, so labeling them all was noise. Starting at
+// beginner is the norm and stays unlabeled; a track that assumes prior
+// ground gets a clear "Starts at intermediate/advanced" heads-up.
 function DifficultyBadgePill({ levels }: { levels: Track['topics'][number]['difficulty'][] }) {
   const order = ['beginner', 'intermediate', 'advanced'] as const;
   const top = order.find((l) => levels.includes(l)) ?? 'beginner';
-  const span = levels.length > 1 ? `${cap(top)}\u2013${cap(order[Math.max(...levels.map((l) => order.indexOf(l)))])}` : cap(top);
+  if (top === 'beginner') return null;
+  const span = `Starts at ${top}`;
   const cls: Record<string, string> = {
     beginner: 'text-diff-beginner bg-diff-beginner/10',
     intermediate: 'text-diff-intermediate bg-diff-intermediate/10',
@@ -297,7 +301,6 @@ function DifficultyBadgePill({ levels }: { levels: Track['topics'][number]['diff
     </span>
   );
 }
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /* ----------------------------- ProjectCard ----------------------------- */
 const diffPill: Record<string, string> = {

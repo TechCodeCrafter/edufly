@@ -77,6 +77,90 @@ export default function Dashboard() {
 
   const xpPct = Math.round((xpIntoLevel / xpForNextLevel) * 100);
 
+  // A brand-new account has nothing to report yet. Instead of a wall of
+  // zeros, the page leads with the next concrete action and fills in as
+  // real progress arrives.
+  const hasProgress =
+    totalXP > 0 || topicsDone > 0 || projectsDone > 0 || masteredCount > 0 || streakDays > 0;
+  const firstUp = upNext[0];
+  const earnedCount = achievements.filter((a) => a.earned(p)).length;
+
+  if (!hasProgress && firstUp) {
+    return (
+      <>
+        <DarkHeader>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <EyebrowPill dot>Up next</EyebrowPill>
+              <h1 className="mt-3 hero-title text-fg">{firstUp.name}</h1>
+              <p className="mt-2 text-base text-fg-muted">
+                {firstUp.trackName} {'\u00b7'} {firstUp.minutes} min {'\u00b7'} the first step on the roadmap
+              </p>
+              <Link to={`/topic/${firstUp.id}`} className="mt-6 inline-block">
+                <Button size="lg" icon="play">Start this topic</Button>
+              </Link>
+            </div>
+            <Glass className="w-full max-w-sm p-5">
+              <p className="mono text-xs uppercase tracking-eyebrow text-accent">Your dashboard</p>
+              <p className="mt-2 text-sm leading-relaxed text-fg-muted">
+                Progress, streaks and achievements all live here. It fills in as you complete your first topics.
+              </p>
+            </Glass>
+          </div>
+        </DarkHeader>
+
+        <div className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-14">
+          <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+            <section>
+              <h2 className="mb-4 font-display text-xl font-bold tracking-tight2 text-fg">Your first steps</h2>
+              <div className="space-y-2.5">
+                {upNext.map((t) => (
+                  <Link
+                    key={t.id}
+                    to={`/topic/${t.id}`}
+                    className="group glass flex items-center gap-3 rounded-card p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                  >
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line bg-card-2 text-accent">
+                      <Icon name="play" size={16} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-fg">{t.name}</p>
+                      <p className="mono text-[10px] uppercase tracking-eyebrow text-fg-faint">
+                        {t.trackName} {'\u00b7'} {t.minutes}m
+                      </p>
+                    </div>
+                    <Icon name="arrow-right" size={16} className="text-fg-faint transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                ))}
+              </div>
+              <Link to="/" className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:opacity-80">
+                See the full roadmap <Icon name="arrow-right" size={15} />
+              </Link>
+            </section>
+            <section className="glass h-fit rounded-card p-6">
+              <h2 className="font-display text-base font-bold text-fg">How this page fills in</h2>
+              <ul className="mt-4 space-y-3.5">
+                {[
+                  { icon: 'zap' as IconName, text: 'Completing topics earns XP and levels you up.' },
+                  { icon: 'flame' as IconName, text: 'Learning on consecutive days builds your streak.' },
+                  { icon: 'trophy' as IconName, text: 'Achievements unlock as you hit real milestones.' },
+                  { icon: 'users' as IconName, text: 'Finish a topic while signed in to join the public leaderboard.' },
+                ].map((row) => (
+                  <li key={row.text} className="flex items-start gap-3 text-sm leading-relaxed text-fg-muted">
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-line bg-card-2 text-accent">
+                      <Icon name={row.icon} size={14} />
+                    </span>
+                    {row.text}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <DarkHeader>
@@ -254,7 +338,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Achievements */}
+        {/* Achievements: hidden until the first one is earned, so a new
+            account never sees a grid of locked badges. */}
+        {earnedCount > 0 && (
         <section className="mt-12">
           <h2 className="mb-5 font-display text-xl font-bold tracking-tight2 text-fg">Achievements</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -288,6 +374,7 @@ export default function Dashboard() {
             })}
           </div>
         </section>
+        )}
 
         {/* Reset */}
         <div className="mt-12 glass flex flex-col items-start justify-between gap-4 rounded-card p-6 sm:flex-row sm:items-center">

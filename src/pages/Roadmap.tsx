@@ -25,7 +25,13 @@ export default function Roadmap() {
 
   // Only resume from a topic the user has actually opened. No fake fallback.
   const resumeTopic = lastTopicId ? allTopics.find((t) => t.id === lastTopicId) : undefined;
-  const started = totalXP > 0 || !!lastTopicId || streakDays > 0;
+  // "Started" means real progress (a completed action), not a mere page
+  // visit. Someone who opened one topic and ticked nothing should still see
+  // the welcoming journey card, not three 0% bars and 0 XP.
+  const started = totalXP > 0 || streakDays > 0;
+  // The concrete "up next" action: the topic they last opened, or the very
+  // first topic on the roadmap if they have not opened any.
+  const firstTopic = resumeTopic ?? allTopics[0];
 
   // Recently viewed rail: skip the one already shown in the Resume banner so we
   // never repeat it. Resolve ids to full topic records.
@@ -50,7 +56,7 @@ export default function Roadmap() {
         <div className="absolute inset-0 hero-glow opacity-80" />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:py-28">
           <div className="animate-fade-up">
-            <EyebrowPill live>Free &amp; open-source</EyebrowPill>
+            <EyebrowPill live>Free, no catch</EyebrowPill>
             <h1 className="hero-title mt-6 text-fg">
               Become a DevOps
               <br />
@@ -59,7 +65,7 @@ export default function Roadmap() {
               <span className="gradient-text">structured</span> way.
             </h1>
             <p className="mt-6 max-w-lg text-base leading-relaxed text-fg-muted">
-              {`One clear path from Linux to Platform Engineering. ${allTopics.length} topics, ${projects.length} hands-on projects and ${questions.length}+ interview questions, with progress that actually sticks.`}
+              {`One clear path from Linux to Platform Engineering. ${allTopics.length} topics, ${projects.length} hands-on projects and ${questions.length} interview questions, with progress that actually sticks.`}
             </p>
             <div className="mt-8">
               <div className="flex flex-wrap items-center gap-3">
@@ -74,7 +80,7 @@ export default function Roadmap() {
               </div>
               <p className="mt-3 inline-flex items-center gap-1.5 text-sm text-fg-faint">
                 <Icon name="check" size={14} className="text-accent" />
-                {'No login required \u00b7 free and open-source'}
+                {'No login required \u00b7 free forever'}
               </p>
             </div>
 
@@ -83,7 +89,7 @@ export default function Roadmap() {
               {[
                 { icon: 'compass', value: allTopics.length, label: 'Topics' },
                 { icon: 'box', value: projects.length, label: 'Projects' },
-                { icon: 'book', value: `${questions.length}+`, label: 'Questions' },
+                { icon: 'book', value: questions.length, label: 'Questions' },
                 { icon: 'layers', value: tracks.length, label: 'Tracks' },
               ].map((s) => (
                 <div key={s.label} className="flex items-center gap-3">
@@ -149,11 +155,15 @@ export default function Roadmap() {
                           </span>
                           {isNextStep ? (
                             <span className="mono shrink-0 text-xs font-semibold text-accent">Start</span>
-                          ) : (
+                          ) : started ? (
                             <span className="mono shrink-0 text-xs text-fg-faint">{pct}%</span>
+                          ) : (
+                            <span className="mono shrink-0 text-xs text-fg-faint">Step {i + 1}</span>
                           )}
                         </div>
-                        <Bar value={pct} height={5} />
+                        {/* Progress bars only once there is progress to show.
+                            Three 0% bars read as a wall of zeros to a newcomer. */}
+                        {started && <Bar value={pct} height={5} />}
                       </div>
                     </div>
                   );
@@ -169,13 +179,31 @@ export default function Roadmap() {
                 Or jump straight into an AI mock interview.
               </Link>
             )}
-            <div className="mt-6 flex items-center justify-between border-t border-line pt-5">
-              <StreakChip streakDays={streakDays} />
-              <span className="inline-flex items-center gap-1.5 text-sm text-fg-muted">
-                <Icon name="zap" size={16} className="text-accent" />
-                <span className="mono font-semibold text-fg">{totalXP.toLocaleString()} XP</span>
-              </span>
-            </div>
+            {started ? (
+              <div className="mt-6 flex items-center justify-between border-t border-line pt-5">
+                <StreakChip streakDays={streakDays} />
+                <span className="inline-flex items-center gap-1.5 text-sm text-fg-muted">
+                  <Icon name="zap" size={16} className="text-accent" />
+                  <span className="mono font-semibold text-fg">{totalXP.toLocaleString()} XP</span>
+                </span>
+              </div>
+            ) : (
+              <Link
+                to={`/topic/${firstTopic.id}`}
+                className="group mt-6 flex items-center justify-between border-t border-line pt-5"
+              >
+                <span className="inline-flex items-center gap-2 text-sm font-medium text-fg">
+                  <Icon name="play" size={15} className="text-accent" />
+                  <span>
+                    <span className="text-fg-faint">Up next: </span>
+                    {firstTopic.name}
+                  </span>
+                </span>
+                <span className="mono shrink-0 text-xs text-fg-faint transition-colors group-hover:text-accent">
+                  {firstTopic.minutes} min
+                </span>
+              </Link>
+            )}
             {streakDates.length > 0 && (
               <div className="mt-5 border-t border-line pt-5">
                 <div className="mb-2.5 flex items-center justify-between">
@@ -299,7 +327,7 @@ export default function Roadmap() {
           <CtaCard
             to="/interview"
             icon="book"
-            title="60+ interview questions"
+            title={`${questions.length} interview questions`}
             body="Curated by topic and difficulty, with crisp model answers. Flip, filter and mark the ones you've mastered."
             cta="Open the guide"
             teaser="Mock interviews with live AI feedback"
@@ -393,6 +421,20 @@ function ViewSwitcher({ view, setView }: { view: ViewMode; setView: (v: ViewMode
   );
 }
 
+// Span classes that keep every phase grid free of orphan cards. The grid is
+// 6 columns on lg; cards normally span 2 (three per row). When a phase count
+// leaves a remainder, the tail cards widen to span 3 (two per row) so no card
+// sits alone next to dead space. 4 tracks become 2+2, 5 become 3+2.
+function gridSpan(i: number, count: number) {
+  if (count === 1) return 'lg:col-span-6';
+  const rem = count % 3;
+  let lg = 'lg:col-span-2';
+  if (rem === 1 && count >= 4 && i >= count - 4) lg = 'lg:col-span-3';
+  if (rem === 2 && i >= count - 2) lg = 'lg:col-span-3';
+  const md = count % 2 === 1 && i === count - 1 ? 'md:col-span-2' : '';
+  return `${lg} ${md}`;
+}
+
 function GridView({ mode }: { mode: RoadMode }) {
   const guided = mode === 'guided';
   let idx = -1;
@@ -412,17 +454,18 @@ function GridView({ mode }: { mode: RoadMode }) {
                 <p className="text-sm text-fg-muted">{phase.tagline}</p>
               </div>
             </div>
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {phaseTracks.map((t) => {
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-6">
+              {phaseTracks.map((t, ti) => {
                 idx += 1;
                 return (
-                  <ModuleCard
-                    key={t.id}
-                    track={t}
-                    index={idx}
-                    rec={REC_BY_TRACK[t.id]}
-                    guided={guided}
-                  />
+                  <div key={t.id} className={gridSpan(ti, phaseTracks.length)}>
+                    <ModuleCard
+                      track={t}
+                      index={idx}
+                      rec={REC_BY_TRACK[t.id]}
+                      guided={guided}
+                    />
+                  </div>
                 );
               })}
             </div>
@@ -615,8 +658,8 @@ function CertificatePreview() {
               {earned ? 'Your Edufly badge is ready' : 'Earn your Edufly completion badge'}
             </h3>
             <p className="mt-2 max-w-md text-sm leading-relaxed text-fg-muted">
-              Finish all fourteen tracks and the twenty-two projects to unlock a shareable badge that proves
-              you can run modern infrastructure end to end.
+              Finish all fourteen tracks and the twenty-two projects to unlock a shareable badge that shows
+              you completed the full path, every topic and every project.
             </p>
             {/* Live, honest progress toward the badge */}
             <div className="mt-5 max-w-md">

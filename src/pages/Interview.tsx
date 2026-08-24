@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { questions } from '../data/questions';
 import { useProgress } from '../store/progress';
-import { Chip, Ring, Button, EyebrowPill, Glass } from '../components/ui';
+import { Chip, Ring, Button, EyebrowPill, Glass, Bar } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { QuestionCard } from '../components/QuestionCard';
 import { DarkHeader } from '../components/DarkHeader';
@@ -80,7 +80,7 @@ export default function Interview() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-relaxed text-fg-muted">
               Run a full mock interview that asks follow-ups and grades you, or drill single questions and get instant
-              feedback on what to tighten. Plus {questions.length}+ questions with model answers to study.
+              feedback on what to tighten. Plus {questions.length} questions with model answers to study.
             </p>
           </div>
           <Glass className="flex shrink-0 items-center gap-5 px-6 py-5">
@@ -97,24 +97,31 @@ export default function Interview() {
       </DarkHeader>
 
       <div className="mx-auto max-w-5xl px-5 py-12 sm:px-8 sm:py-14">
-        {/* AI practice launcher / active panel */}
+        {/* AI practice launcher / active panel. This is the differentiator,
+            so it leads the page at full weight, not as a pair of small cards. */}
         {aiMode === null && (
-          <section className="grid gap-4 sm:grid-cols-2">
-            <ModeCard
-              icon="sparkle"
-              title="Mock interview"
-              desc="A back-and-forth interview that follows up on your answers, then scores you with an honest scorecard."
-              cta="Start mock"
-              onClick={() => setAiMode('mock')}
-              accent
-            />
-            <ModeCard
-              icon="target"
-              title="Quick practice"
-              desc="Pick a question, type your answer, and get an instant AI score with exactly what to improve."
-              cta="Drill a question"
-              onClick={() => startQuick()}
-            />
+          <section>
+            <div className="mb-5 flex items-center gap-2.5">
+              <span className="mono text-[10px] uppercase tracking-eyebrow text-accent">Practice with AI</span>
+              <span className="h-px flex-1 bg-line" />
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2">
+              <ModeCard
+                icon="sparkle"
+                title="Mock interview"
+                desc="A back-and-forth interview that follows up on your answers, then scores you with an honest scorecard."
+                cta="Start mock interview"
+                onClick={() => setAiMode('mock')}
+                accent
+              />
+              <ModeCard
+                icon="target"
+                title="Quick practice"
+                desc="Pick a question, type your answer, and get an instant AI score with exactly what to improve."
+                cta="Drill a question"
+                onClick={() => startQuick()}
+              />
+            </div>
           </section>
         )}
 
@@ -228,13 +235,49 @@ export default function Interview() {
               </div>
             </div>
 
-            {/* List */}
+            {/* List: grouped by topic with per-topic progress when browsing
+                everything, flat when searching or drilling into one topic. */}
             {filtered.length > 0 ? (
-              <div className="mt-4 space-y-3">
-                {filtered.map((q, i) => (
-                  <QuestionCard key={q.id} question={q} num={i + 1} onPractice={() => startQuick(q)} />
-                ))}
-              </div>
+              cat === ALL && query.trim() === '' ? (
+                <div className="mt-2">
+                  {(() => {
+                    let num = 0;
+                    return categories
+                      .map(([name]) => ({ name, qs: filtered.filter((q) => q.category === name) }))
+                      .filter((g) => g.qs.length > 0)
+                      .map((g) => {
+                        const mastered = g.qs.filter((q) => isMastered(q.id)).length;
+                        const pct = Math.round((mastered / g.qs.length) * 100);
+                        return (
+                          <div key={g.name}>
+                            <div className="mb-3 mt-8 flex items-center gap-3">
+                              <h3 className="font-display text-base font-bold text-fg">{g.name}</h3>
+                              <span className="h-px flex-1 bg-line" />
+                              <span className="hidden w-20 sm:block">
+                                <Bar value={pct} height={4} />
+                              </span>
+                              <span className="mono shrink-0 text-xs text-fg-faint">
+                                {mastered}/{g.qs.length} mastered
+                              </span>
+                            </div>
+                            <div className="space-y-3">
+                              {g.qs.map((q) => {
+                                num += 1;
+                                return <QuestionCard key={q.id} question={q} num={num} onPractice={() => startQuick(q)} />;
+                              })}
+                            </div>
+                          </div>
+                        );
+                      });
+                  })()}
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+                  {filtered.map((q, i) => (
+                    <QuestionCard key={q.id} question={q} num={i + 1} onPractice={() => startQuick(q)} />
+                  ))}
+                </div>
+              )
             ) : (
               <div className="mt-4 grid place-items-center rounded-card border border-dashed border-line bg-card-2/40 py-20 text-center">
                 <span className="grid h-14 w-14 place-items-center rounded-2xl border border-line bg-card-2 text-fg-faint">
@@ -274,16 +317,22 @@ function ModeCard({
   return (
     <button
       onClick={onClick}
-      className={`group glass flex flex-col items-start rounded-card p-6 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift ${
-        accent ? 'ring-1 ring-accent/30' : ''
+      className={`group glass flex flex-col items-start rounded-card p-7 text-left transition-all hover:-translate-y-0.5 hover:shadow-lift sm:p-8 ${
+        accent ? 'ring-2 ring-accent/40 shadow-glow-sm' : ''
       }`}
     >
-      <span className="grid h-11 w-11 place-items-center rounded-xl gradient-bg text-white shadow-glow-sm">
-        <Icon name={icon} size={22} />
+      <span className="grid h-12 w-12 place-items-center rounded-2xl gradient-bg text-white shadow-glow-sm">
+        <Icon name={icon} size={24} />
       </span>
-      <h3 className="mt-4 text-lg font-bold text-fg">{title}</h3>
-      <p className="mt-1.5 flex-1 text-sm leading-relaxed text-fg-muted">{desc}</p>
-      <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-accent">
+      <h3 className="mt-5 font-display text-xl font-bold tracking-tight2 text-fg">{title}</h3>
+      <p className="mt-2 flex-1 text-sm leading-relaxed text-fg-muted">{desc}</p>
+      <span
+        className={`mt-5 inline-flex items-center gap-1.5 rounded-btn px-4 py-2 text-sm font-semibold transition-all ${
+          accent
+            ? 'gradient-bg text-white shadow-glow-sm group-hover:opacity-90'
+            : 'border border-line bg-card-2 text-fg group-hover:border-accent/40 group-hover:text-accent'
+        }`}
+      >
         {cta}
         <Icon name="arrow-right" size={16} className="transition-transform group-hover:translate-x-0.5" />
       </span>

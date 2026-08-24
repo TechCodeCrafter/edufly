@@ -14,7 +14,7 @@ export interface LeaderboardRow {
   updated_at: string;
 }
 
-export function useLeaderboard(limit: number, orderBy: 'streak_days' | 'mastered_count' | 'topics_done' = 'streak_days') {
+export function useLeaderboard(limit: number, orderBy: 'streak_days' | 'mastered_count' | 'topics_done' = 'topics_done') {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -27,11 +27,16 @@ export function useLeaderboard(limit: number, orderBy: 'streak_days' | 'mastered
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data, error: err } = await supabase
+      // Only accounts with real progress make the board. Zero-progress rows
+      // add noise and make the page read as abandoned, so they stay off.
+      let query = supabase
         .from('leaderboard_entries')
         .select('*')
-        .order(orderBy, { ascending: false })
-        .limit(limit);
+        .gt('topics_done', 0)
+        .order(orderBy, { ascending: false });
+      if (orderBy !== 'topics_done') query = query.order('topics_done', { ascending: false });
+      if (orderBy !== 'streak_days') query = query.order('streak_days', { ascending: false });
+      const { data, error: err } = await query.limit(limit);
       if (cancelled) return;
       if (err) {
         setError(true);
@@ -95,22 +100,22 @@ export function LeaderboardRowItem({ row, rank }: { row: LeaderboardRow; rank: n
   );
 }
 
-// Homepage teaser: top 5 by streak, public, works logged out. Renders
-// nothing if cloud sync is disabled or there is genuinely no data yet, so
-// the homepage never shows a fabricated or empty-looking section.
+// Homepage teaser: top 5 by topics completed, public, works logged out.
+// Renders nothing if cloud sync is disabled or there are fewer than three
+// learners with real progress, so the homepage never shows a sparse section.
 export function LeaderboardPreview() {
-  const { rows, loading, error } = useLeaderboard(5, 'streak_days');
+  const { rows, loading, error } = useLeaderboard(5, 'topics_done');
   if (!cloudEnabled || error) return null;
-  if (!loading && rows.length === 0) return null;
+  if (!loading && rows.length < 3) return null;
 
   return (
     <div>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <EyebrowPill dot className="mb-3">Live</EyebrowPill>
-          <h2 className="section-title text-fg">Top learners this week</h2>
+          <h2 className="section-title text-fg">Top learners</h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-fg-muted">
-            Real streaks from real accounts, ranked by consecutive days learning.
+            The learners furthest along the roadmap, ranked by topics completed.
           </p>
         </div>
         <Link to="/leaderboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:opacity-80">
