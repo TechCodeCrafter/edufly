@@ -105,14 +105,24 @@ try {
 }
 
 const context = await browser.newContext();
+// Hermetic prerender: only the local static server is reachable. External
+// calls (fonts, Supabase) would otherwise hang builds on machines without
+// open internet and make snapshots nondeterministic. The <link>/<script>
+// tags stay in the HTML, so real visitors still load everything.
+await context.route('**/*', (r) => {
+  const u = new URL(r.request().url());
+  if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') return r.continue();
+  return r.abort();
+});
 const results = new Map();
 const failed = [];
 const queue = [...prerenderRoutes];
 const WORKERS = 6;
 
 async function snapshot(page, route) {
-  await page.goto(`http://localhost:${port}${route}`, { waitUntil: 'load', timeout: 20000 });
-  await page.waitForSelector('#root > *', { timeout: 15000 });
+  // domcontentloaded: never block on slow third-party resources (fonts etc.)
+  await page.goto(`http://localhost:${port}${route}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.waitForSelector('#root > *', { timeout: 20000 });
   await page.waitForTimeout(350);
   const html = await page.evaluate(() => {
     document.body.setAttribute('data-prerendered', 'true');
@@ -129,8 +139,12 @@ await Promise.all(
       if (!route) break;
       try {
         await snapshot(page, route);
-      } catch (e) {
-        failed.push(`${route}: ${e.message.split('\n')[0]}`);
+      } catch {
+        try {
+          await snapshot(page, route); // one retry, transient slowness happens
+        } catch (e) {
+          failed.push(`${route}: ${e.message.split('\n')[0]}`);
+        }
       }
     }
     await page.close();
