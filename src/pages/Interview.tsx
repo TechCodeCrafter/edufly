@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
-import { questions } from '../data/questions';
+import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { questions, categorySlug } from '../data/questions';
 import { useProgress } from '../store/progress';
 import { Chip, Ring, Button, EyebrowPill, Glass, Bar } from '../components/ui';
 import { Icon } from '../components/Icon';
@@ -8,6 +9,7 @@ import { DarkHeader } from '../components/DarkHeader';
 import { QuickPractice } from '../components/ai/QuickPractice';
 import { MockInterview } from '../components/ai/MockInterview';
 import type { Difficulty, Question } from '../data/types';
+import { usePageMeta } from '../lib/meta';
 
 const ALL = 'All';
 const difficulties: (Difficulty | typeof ALL)[] = [ALL, 'beginner', 'intermediate', 'advanced'];
@@ -24,6 +26,12 @@ function randomQuestion(pool: Question[]): Question {
 }
 
 export default function Interview() {
+  usePageMeta({
+    title: 'DevOps interview questions with answers | Edufly',
+    description:
+      '62 real DevOps interview questions with detailed answers across Kubernetes, Terraform, Docker, networking and more, plus AI mock interviews.',
+    path: '/interview',
+  });
   const { masteredCount, questionsTotal, toggleMastered, isMastered } = useProgress();
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState<string>(ALL);
@@ -68,6 +76,21 @@ export default function Interview() {
     setAiMode(null);
     setQuickQuestion(null);
   };
+
+  // Deep link: /interview?practice=<question-id> jumps straight into Quick
+  // Practice for that question. Used by the per-track question hub pages.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    const qid = searchParams.get('practice');
+    if (!qid) return;
+    const q = questions.find((x) => x.id === qid);
+    if (q) {
+      setQuickQuestion(q);
+      setAiMode('quick');
+    }
+    setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -251,7 +274,20 @@ export default function Interview() {
                         return (
                           <div key={g.name}>
                             <div className="mb-3 mt-8 flex items-center gap-3">
-                              <h3 className="font-display text-base font-bold text-fg">{g.name}</h3>
+                              <Link
+                                to={`/interview/${categorySlug(g.name)}`}
+                                className="group inline-flex items-center gap-1.5"
+                                title={`${g.name} interview questions`}
+                              >
+                                <h3 className="font-display text-base font-bold text-fg group-hover:text-accent">
+                                  {g.name}
+                                </h3>
+                                <Icon
+                                  name="arrow-right"
+                                  size={14}
+                                  className="text-fg-faint transition-transform group-hover:translate-x-0.5 group-hover:text-accent"
+                                />
+                              </Link>
                               <span className="h-px flex-1 bg-line" />
                               <span className="hidden w-20 sm:block">
                                 <Bar value={pct} height={4} />

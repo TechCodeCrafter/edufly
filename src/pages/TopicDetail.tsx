@@ -6,6 +6,7 @@ import { Button, Ring, DifficultyBadge, Glass } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { CodeBlock } from '../components/CodeBlock';
 import { DarkHeader } from '../components/DarkHeader';
+import { usePageMeta } from '../lib/meta';
 
 const resourceIcon: Record<string, string> = {
   Reading: 'book',
@@ -22,6 +23,12 @@ export default function TopicDetail() {
   const { id } = useParams();
   const topic = allTopics.find((t) => t.id === id);
   const { topicStatus, cycleTopic, setTopicDone, trackPct, recordView } = useProgress();
+
+  usePageMeta({
+    title: topic ? `${topic.name} | Edufly DevOps roadmap` : 'Topic not found | Edufly',
+    description: topic ? topic.summary : 'That topic is not part of the roadmap.',
+    path: topic ? `/topic/${topic.id}` : '/',
+  });
 
   // Mark this topic as the one to resume from and add it to Recently viewed.
   useEffect(() => {

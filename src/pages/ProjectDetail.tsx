@@ -7,6 +7,7 @@ import { Button, Ring, Glass } from '../components/ui';
 import { ShareToXButton } from '../components/ShareToX';
 import { Icon } from '../components/Icon';
 import { DarkHeader } from '../components/DarkHeader';
+import { usePageMeta } from '../lib/meta';
 
 const diffPill: Record<string, string> = {
   beginner: 'text-diff-beginner bg-diff-beginner/10',
@@ -18,6 +19,12 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const project = projects.find((p) => p.id === id);
   const { projectPct, projectStepDone, toggleProjectStep } = useProgress();
+
+  usePageMeta({
+    title: project ? `${project.title} | Edufly hands-on DevOps project` : 'Project not found | Edufly',
+    description: project ? project.blurb : 'That project is not in the catalog.',
+    path: project ? `/project/${project.id}` : '/projects',
+  });
   const [openStep, setOpenStep] = useState<Record<number, boolean>>({});
   const toggleOpenStep = (i: number) => setOpenStep((s) => ({ ...s, [i]: !s[i] }));
 

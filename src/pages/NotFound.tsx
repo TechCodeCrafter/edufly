@@ -1,8 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Button, EyebrowPill } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { usePageMeta } from '../lib/meta';
 
 export default function NotFound() {
+  usePageMeta({
+    title: 'Page not found | Edufly',
+    description:
+      'That page does not exist. Head back to the DevOps roadmap.',
+    path: '/',
+  });
   return (
     <section className="relative flex min-h-[70vh] items-center overflow-hidden">
       <div className="absolute inset-0 hero-glow" />

@@ -7,6 +7,7 @@ import TopicDetail from './pages/TopicDetail';
 import Projects from './pages/Projects';
 import ProjectDetail from './pages/ProjectDetail';
 import Interview from './pages/Interview';
+import InterviewTrack from './pages/InterviewTrack';
 import Dashboard from './pages/Dashboard';
 import Comparisons from './pages/Comparisons';
 import ComparisonDetail from './pages/ComparisonDetail';
@@ -33,6 +34,7 @@ export default function App() {
           <Route path="/projects" element={<Projects />} />
           <Route path="/project/:id" element={<ProjectDetail />} />
           <Route path="/interview" element={<Interview />} />
+          <Route path="/interview/:slug" element={<InterviewTrack />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/compare" element={<Comparisons />} />
           <Route path="/compare/:id" element={<ComparisonDetail />} />

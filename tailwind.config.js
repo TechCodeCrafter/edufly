@@ -45,7 +45,7 @@ export default {
       fontFamily: {
         display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         sans: ['Manrope', 'system-ui', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+        mono: ['ui-monospace', '"SF Mono"', '"Cascadia Mono"', 'Menlo', 'Consolas', 'monospace'],
       },
       borderRadius: {
         chip: '8px',

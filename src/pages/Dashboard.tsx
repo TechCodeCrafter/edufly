@@ -11,6 +11,7 @@ import { Heatmap } from '../components/Heatmap';
 import { DarkHeader } from '../components/DarkHeader';
 import { ShareToXButton } from '../components/ShareToX';
 import type { IconName } from '../components/Icon';
+import { usePageMeta } from '../lib/meta';
 
 interface Achievement {
   id: string;
@@ -32,6 +33,12 @@ const achievements: Achievement[] = [
 ];
 
 export default function Dashboard() {
+  usePageMeta({
+    title: 'Your dashboard | Edufly',
+    description:
+      'Your progress across 95 topics, 22 projects and 62 interview questions, with streaks and achievements.',
+    path: '/dashboard',
+  });
   const p = useProgress();
   const { user } = useAuth();
   const [weakTopics, setWeakTopics] = useState<TopicPerformance[]>([]);

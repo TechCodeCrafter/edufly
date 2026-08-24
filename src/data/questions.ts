@@ -152,3 +152,43 @@ export const questions: Question[] = [
   q('q-sre-extra-1', 'What is an error budget and how does it change how teams ship?', 'SRE', 'advanced',
     'An error budget is the allowed amount of unreliability, the gap between your SLO and one hundred percent. While budget remains, teams ship features freely; once it is exhausted, the focus shifts to reliability work until the service recovers. It turns the reliability debate into a shared, data-driven decision instead of a tug of war between product and operations.'),
 ];
+
+// URL-safe slug for a question category ('CI/CD' -> 'ci-cd'). Powers the
+// per-track interview hub pages at /interview/<slug>.
+export const categorySlug = (name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+export interface QuestionCategory {
+  name: string;
+  slug: string;
+  questions: Question[];
+}
+
+export const questionCategories: QuestionCategory[] = (() => {
+  const map = new Map<string, Question[]>();
+  questions.forEach((q) => {
+    const list = map.get(q.category) ?? [];
+    list.push(q);
+    map.set(q.category, list);
+  });
+  return [...map.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([name, qs]) => ({ name, slug: categorySlug(name), questions: qs }));
+})();
+
+export const categoryBySlug = (slug: string) => questionCategories.find((c) => c.slug === slug);
+
+// Which roadmap track to point to from each interview hub page.
+export const categoryTrackId: Record<string, string> = {
+  Kubernetes: 'kubernetes',
+  Networking: 'networking',
+  Terraform: 'terraform',
+  Docker: 'docker',
+  'CI/CD': 'cicd',
+  SRE: 'sre',
+  Monitoring: 'monitoring',
+  Linux: 'linux',
+  GitOps: 'gitops',
+  Cloud: 'cloud',
+  Scripting: 'scripting',
+  Platform: 'platform',
+};

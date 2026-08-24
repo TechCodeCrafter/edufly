@@ -7,5 +7,7 @@
     "api/interview.ts": {
       "maxDuration": 30
     }
-  }
+  },
+  "trailingSlash": false,
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
 }

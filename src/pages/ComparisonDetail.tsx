@@ -4,10 +4,17 @@ import { tracks } from '../data/tracks';
 import { Glass, EyebrowPill, Button } from '../components/ui';
 import { Icon } from '../components/Icon';
 import NotFound from './NotFound';
+import { usePageMeta } from '../lib/meta';
 
 export default function ComparisonDetail() {
   const { id } = useParams<{ id: string }>();
   const comparison = id ? comparisonById(id) : undefined;
+
+  usePageMeta({
+    title: comparison ? `${comparison.title} | Edufly` : 'Comparison not found | Edufly',
+    description: comparison ? comparison.summary : 'That comparison does not exist.',
+    path: comparison ? `/compare/${comparison.id}` : '/compare',
+  });
 
   if (!comparison) return <NotFound />;
 

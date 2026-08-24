@@ -6,6 +6,7 @@ import { Icon } from '../components/Icon';
 import { ProjectCard } from '../components/cards';
 import { DarkHeader } from '../components/DarkHeader';
 import type { Difficulty } from '../data/types';
+import { usePageMeta } from '../lib/meta';
 
 const ALL = 'All';
 const difficulties: (Difficulty | typeof ALL)[] = [ALL, 'beginner', 'intermediate', 'advanced'];
@@ -17,6 +18,12 @@ const diffDot: Record<Difficulty, string> = {
 };
 
 export default function Projects() {
+  usePageMeta({
+    title: 'Hands-on DevOps projects | Edufly',
+    description:
+      '22 real DevOps projects with step-by-step briefs, from a hardened home server to a full platform engineering capstone.',
+    path: '/projects',
+  });
   const { projectsDone, projectsTotal } = useProgress();
   const [area, setArea] = useState<string>(ALL);
   const [diff, setDiff] = useState<Difficulty | typeof ALL>(ALL);

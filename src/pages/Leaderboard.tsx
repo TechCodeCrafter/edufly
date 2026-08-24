@@ -3,6 +3,7 @@ import { useLeaderboard, LeaderboardRowItem } from '../components/Leaderboard';
 import { cloudEnabled } from '../lib/supabaseClient';
 import { EyebrowPill, Chip } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { usePageMeta } from '../lib/meta';
 
 type SortKey = 'streak_days' | 'mastered_count' | 'topics_done';
 
@@ -17,6 +18,12 @@ const sorts: { key: SortKey; label: string; icon: 'flame' | 'trophy' | 'check' }
 const MIN_ENTRIES = 5;
 
 export default function Leaderboard() {
+  usePageMeta({
+    title: 'Leaderboard | Edufly',
+    description:
+      'Learners ranked by real progress across the DevOps roadmap. Sign in with Google to claim your spot.',
+    path: '/leaderboard',
+  });
   const [sort, setSort] = useState<SortKey>('topics_done');
   const { rows, loading, error } = useLeaderboard(50, sort);
 

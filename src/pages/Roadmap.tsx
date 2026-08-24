@@ -11,6 +11,7 @@ import { ModuleCard, type RecKind } from '../components/cards';
 import { Heatmap } from '../components/Heatmap';
 import { comparisons, comparisonCategories } from '../data/comparisons';
 import { LeaderboardPreview } from '../components/Leaderboard';
+import { usePageMeta } from '../lib/meta';
 
 type ViewMode = 'grid' | 'spine' | 'path';
 type RoadMode = 'guided' | 'browse';
@@ -19,6 +20,12 @@ type RoadMode = 'guided' | 'browse';
 const REC_BY_TRACK: Record<string, RecKind> = { linux: 'start' };
 
 export default function Roadmap() {
+  usePageMeta({
+    title: 'Edufly \u2014 Become a DevOps engineer, the structured way',
+    description:
+      'The free, structured DevOps learning roadmap and interview guide. 95 topics, 22 hands-on projects, and 62 interview questions with progress that actually sticks.',
+    path: '/',
+  });
   const [view, setView] = useState<ViewMode>('grid');
   const [mode, setMode] = useState<RoadMode>('guided');
   const { totalXP, streakDays, streakDates, trackPct, lastTopicId, recentTopics, topicStatus, overallPct } = useProgress();

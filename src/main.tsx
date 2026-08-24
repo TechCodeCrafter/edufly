@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
 import { ThemeProvider } from './store/theme';
@@ -13,7 +13,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <ThemeProvider>
         <ProgressProvider>
           <AuthProvider>
@@ -27,6 +27,6 @@ createRoot(document.getElementById('root')!).render(
           </AuthProvider>
         </ProgressProvider>
       </ThemeProvider>
-    </HashRouter>
+    </BrowserRouter>
   </StrictMode>
 );

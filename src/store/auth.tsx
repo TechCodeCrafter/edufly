@@ -3,7 +3,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase, cloudEnabled } from '../lib/supabaseClient';
 import { safeStorage } from './storage';
 
-const RETURN_HASH_KEY = 'edufly.auth.returnHash';
+const RETURN_PATH_KEY = 'edufly.auth.returnPath';
 
 interface AuthCtx {
   user: User | null;
@@ -42,16 +42,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_IN') {
         setJustSignedIn(true);
 
-        // Restore the hash route the learner was on before the Google
-        // redirect, and strip the ?code=... (and any other auth query
-        // params) Google/Supabase appended so the address bar is clean.
-        const returnHash = safeStorage.get(RETURN_HASH_KEY);
-        safeStorage.remove(RETURN_HASH_KEY);
-        const cleanPath = window.location.pathname;
+        // Restore the route the learner was on before the Google redirect,
+        // and strip the ?code=... (and any other auth query params)
+        // Google/Supabase appended so the address bar is clean. A popstate
+        // event tells React Router about the URL we just swapped in.
+        const returnPath = safeStorage.get(RETURN_PATH_KEY);
+        safeStorage.remove(RETURN_PATH_KEY);
+        const cleanPath = returnPath && returnPath.startsWith('/') ? returnPath : window.location.pathname;
         window.history.replaceState(window.history.state, '', cleanPath);
-        if (returnHash && returnHash !== '#' && returnHash.length > 1) {
-          window.location.hash = returnHash;
-        }
+        window.dispatchEvent(new PopStateEvent('popstate', { state: window.history.state }));
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -62,17 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     if (!supabase) return;
     // Remember exactly where the learner clicked "sign in" so we can send
-    // them back after the round trip. We do NOT put this route on the
-    // redirect URL itself: the app uses hash routing (#/topic/...), and a
-    // URL fragment can't carry a real query string, so Google/Supabase's
-    // appended ?code=... would land inside the hash and never parse as an
-    // actual query parameter. Google Sign-In would then silently fail to
-    // complete. Redirecting to a clean, hash-free URL keeps ?code=... a
-    // real query string that Supabase's client can read.
-    safeStorage.set(RETURN_HASH_KEY, window.location.hash);
+    // them back after the round trip. We redirect to the site root (the
+    // URL already on Supabase's allow-list) rather than the current deep
+    // path, then restore the saved path once the session lands.
+    safeStorage.set(RETURN_PATH_KEY, window.location.pathname);
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}${window.location.pathname}` },
+      options: { redirectTo: `${window.location.origin}/` },
     });
   }, []);
 

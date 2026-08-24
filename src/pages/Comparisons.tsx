@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import { comparisons, comparisonCategories } from '../data/comparisons';
 import { Chip, EyebrowPill } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { usePageMeta } from '../lib/meta';
 
 export default function Comparisons() {
+  usePageMeta({
+    title: 'DevOps comparisons | Edufly',
+    description:
+      'Plain-English breakdowns of the choices interviewers love to ask about: TCP vs UDP, Docker vs VMs, Terraform vs Ansible, and more.',
+    path: '/compare',
+  });
   const [category, setCategory] = useState<string | null>(null);
   const filtered = category ? comparisons.filter((c) => c.category === category) : comparisons;
 
